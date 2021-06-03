@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#SBATCH -J EICSTUDY    # job name
+#SBATCH -J OLeAA    # job name
 #SBATCH -o logs/simple-%A_%a.out
 #SBATCH -e logs/simple-%A_%a.out
 #SBATCH -n 1
@@ -8,8 +8,6 @@
 #SBATCH -p htc             # queue (partition) -- batch, parallel, etc.  parallel-medium
 #SBATCH -t 12:00:00        # run time (hh:mm:ss)
 #SBATCH -D .               # Directory where executable will be run
-#SBATCH --mail-user=ssekula@smu.edu
-#SBATCH --mail-type=fail    # email me when the job finishes
 
 
 # This script was written originally for use on a SLURM-based batch system,
@@ -18,7 +16,7 @@
 # it will ask you to specify them. For instance, to run the first variation in a
 # study,
 #
-# SLURM_ARRAY_TASK_ID=0 ./simpleanalysis.py --input <DIRECTORY CONTAINING FILES> --name <OUTPUT DIRECTORY>
+# SLURM_ARRAY_TASK_ID=0 ./oleaa-slurm.py --input <DIRECTORY CONTAINING FILES> --name <OUTPUT DIRECTORY>
 #
 #
 
@@ -44,6 +42,8 @@ parser.add_argument("-n", "--name", type=str,
                     help="name for this study set (e.g. bfield)")
 parser.add_argument("-i", "--input", type=str,
                     help="input directory of Delphes ROOT files")
+parser.add_argument("-o", "--output", type=str,
+                    help="output directory to store results (top level)")
 parser.add_argument("-m", "--modules", type=str,
                     help="analysis module list")
 parser.add_argument("-f", "--force", default=False, action='store_true',
@@ -106,12 +106,12 @@ if root_file == None:
 
 # Get the full path to the input file
 root_file = os.path.abspath(root_file)
-print("Processing %s" % (root_file))
+print(f'Processing {root_file}')
 
 
 # Execute the study
 
-taskdir="%s/%d" % (args.name, fileNumber)
+taskdir=f"{args.output}/{args.name}/{fileNumber}"
 
 if os.path.exists(taskdir) and not args.force:
     print("Skipping this task directory --- it already exists. Cleanup before overwriting!")
@@ -121,6 +121,6 @@ else:
         os.makedirs(taskdir)
 
     # Copy or Link needed files to working directory
-    subprocess.call("cp -a mva_taggers %s/" % (taskdir), shell=True);
+    subprocess.call(f"cp -a mva_taggers {taskdir}/", shell=True);
     # Execute the study
-    subprocess.call('cd {0[taskdir]}; SimpleAnalysis.exe --input_dir {0[root_file]} --output_file out.root --module_sequence "{0[modules]}"'.format({'taskdir': taskdir, 'root_file': root_file, 'modules': args.modules}), shell=True)
+    subprocess.call(f'cd {taskdir}; OLeAA.exe --input_dir {root_file} --output_file out.root --module_sequence "{args.modules}"', shell=True)
