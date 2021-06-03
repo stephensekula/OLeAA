@@ -4,6 +4,8 @@
 * Intended for fast analysis of Delphes-produced ROOT TTree structures
 * Requirements: Delphes and GCC 8.X or higher to compile (utilizes C++-14)
 
+Since one of the EIC proto-experiments is named after the Greek goddess Athena, favorite daughter of Zeus, I chose a name that reflects the association of the olive tree with her as a symbol. "Olea" is the genus of plants that includes the European olive tree, but includes a broader class of species.
+
 ## Author(s)
 
 * Stephen Sekula (original)
