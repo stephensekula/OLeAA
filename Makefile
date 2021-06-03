@@ -1,6 +1,6 @@
 #delphes_path = $(DELPHES_PATH)
 CXX = g++
-CXXFLAGS = -std=c++17 $(shell root-config --cflags --ldflags --libs) -lEG -lTMVA
+CXXFLAGS = -std=c++17 -Wl,-rpath-link=$(shell pythia8-config  --libdir) $(shell root-config --cflags --ldflags --libs) -lEG -lTMVA
 CFILES   = $(wildcard *.cc)
 INCLUDE  = -I$(DELPHES_PATH) 
 LIBS     = -L$(DELPHES_PATH) -lDelphes
