@@ -18,13 +18,16 @@
 
 #include "classes/DelphesClasses.h"
 #include "external/ExRootAnalysis/ExRootTreeReader.h"
+#include "external/ExRootAnalysis/ExRootConfReader.h"
+#include "external/ExRootAnalysis/ExRootTask.h"
+#include "external/ExRootAnalysis/ExRootTreeReader.h"
 
 #include "ModuleHandler.h"
 #include "TreeHandler.h"
 
 static std::string input_dir = "";
 static std::string output_file = "";
-static std::string module_sequence = "";
+static std::string config_file = "";
 static int nevents = -1;
 
 ModuleHandler *ModuleHandler::instance = 0;
@@ -73,11 +76,11 @@ int main(int argc, char *argv[])
     PrintHelp();
   }
 
-  const char* const short_opts = "i:o:h";
+  const char* const short_opts = "i:o:c:n:h";
   const option long_opts[] = {
     {"input_dir", required_argument, nullptr, 'i'},
     {"output_file", required_argument, nullptr, 'o'},
-    {"module_sequence", required_argument, nullptr, 's'},
+    {"config_file", required_argument, nullptr, 'c'},
     {"nevents", optional_argument, nullptr, 'n'},
     {"help", no_argument, nullptr, 'h'},
     {nullptr, no_argument, nullptr, 0}
@@ -102,12 +105,13 @@ int main(int argc, char *argv[])
 	  std::cout << "Output File: " << output_file << std::endl;
 	  break;
 
-        case 's':
-	  module_sequence = optarg;
-	  std::cout << "Module sequence: " << module_sequence << std::endl;
+        case 'c':
+	  config_file = optarg;
+	  std::cout << "Configuration file: " << config_file << std::endl;
 	  break;
 
         case 'n':
+	  std::cout << optarg << std::endl;
 	  nevents = std::stoi(optarg);
 	  std::cout << "Number of events to process: " << nevents << std::endl;
 	  break;
@@ -123,7 +127,8 @@ int main(int argc, char *argv[])
         }
     }
   
-  
+
+  // Prepare the data input
   auto data = new TChain("Delphes");
 
   auto files = fileVector(input_dir);
@@ -134,12 +139,50 @@ int main(int argc, char *argv[])
     }
 
   ExRootTreeReader *treeReader = new ExRootTreeReader(data);
+
   int n_entries = data->GetEntries();
 
   std::cout 
     << "The provided data set contains the following number of events: " << std::endl
     << n_entries
     << std::endl;
+
+
+  // Setup the ModuleHandler
+  ModuleHandler *module_handler = module_handler->getInstance(treeReader);
+
+
+  // Read the connfiguration information from a TCL file
+  ExRootConfReader *confReader = new ExRootConfReader();
+  confReader->ReadFile(config_file.c_str());
+  confReader->SetName("OLeAAConfReader");
+
+  TString name;
+  ExRootTask *task;
+  const ExRootConfReader::ExRootTaskMap *modules = confReader->GetModules();
+  ExRootConfReader::ExRootTaskMap::const_iterator itModules;
+
+  ExRootConfParam param = confReader->GetParam("::ExecutionPath");
+  Long_t i, size = param.GetSize();
+
+  for(i = 0; i < size; ++i)
+    {
+      name = param[i].GetString();
+      itModules = modules->find(name);
+      if(itModules != modules->end())
+	{
+	  std::cout << "   Appending module " << itModules->second.Data() << std::endl;
+	  module_handler->addModule(itModules->second.Data());
+	}
+      else
+	{
+	  stringstream message;
+  	  message << "module '" << name;
+	  message << "' is specified in ExecutionPath but not configured.";
+	  throw runtime_error(message.str());
+	}
+    }
+
 
   // Load object pointers
   TClonesArray *branchJet = treeReader->UseBranch("Jet");
@@ -153,19 +196,9 @@ int main(int argc, char *argv[])
   TClonesArray *branchMET = treeReader->UseBranch("MissingET");
 
 
-  // Setup the module handler
-  ModuleHandler *module_handler = module_handler->getInstance(treeReader);
-  auto module_list = TString(module_sequence).Tokenize(",");
-
   // Setup the output storage
   TreeHandler *tree_handler = tree_handler->getInstance(output_file.c_str(), "tree");
   tree_handler->initialize();
-
-  for (int i = 0; i < module_list->GetEntries(); i++) {
-    auto name = static_cast<TObjString*>(module_list->At(i))->GetString().Data();
-    std::cout << "   Appending module " << name << std::endl;
-    module_handler->addModule(name);
-  }
 
   for (auto module : module_handler->getModules()) {
     module->initialize();

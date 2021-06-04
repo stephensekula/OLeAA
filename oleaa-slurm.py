@@ -43,9 +43,10 @@ parser.add_argument("-n", "--name", type=str,
 parser.add_argument("-i", "--input", type=str,
                     help="input directory of Delphes ROOT files")
 parser.add_argument("-o", "--output", type=str,
-                    help="output directory to store results (top level)")
-parser.add_argument("-m", "--modules", type=str,
-                    help="analysis module list")
+                    help="output directory to store results (top level)",
+                    default="./")
+parser.add_argument("-c", "--config", type=str,
+                    help="configuration file (TCL)")
 parser.add_argument("-f", "--force", default=False, action='store_true',
                     help="force-overwrite existing output")
 
@@ -122,5 +123,6 @@ else:
 
     # Copy or Link needed files to working directory
     subprocess.call(f"cp -a mva_taggers {taskdir}/", shell=True);
+    subprocess.call(f"cp -a {args.config} {taskdir}/", shell=True);
     # Execute the study
-    subprocess.call(f'cd {taskdir}; OLeAA.exe --input_dir {root_file} --output_file out.root --module_sequence "{args.modules}"', shell=True)
+    subprocess.call(f'cd {taskdir}; OLeAA.exe --input_dir {root_file} --output_file out.root --config_file "{args.config}"', shell=True)
