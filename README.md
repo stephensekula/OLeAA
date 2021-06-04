@@ -26,15 +26,15 @@ If you don't set ```DELPHES_PATH```, make will complain until you do. :-)
 
 ## Running
 
-Eventually, OLeAA will use a text configuration file to setup the execution (creation of analysis modules, order of execution, etc). For now, you can specify all of this on the command line.
+OLeAA uses a TCL-based text configuration file (with the same basic structure as used in DELPHES) to setup the execution (creation of analysis modules, order of execution, etc).
 
 For example, let's imagine you have produced a bunch of ROOT files using Delphes. Imagine the are located in a folder called ```Delphes_Output/```. To process those files using OLeAA:
 
 ```
-./OLeAA.exe --input_dir Delphes_Output/ --output_file OLeAA_Results.root --module_sequence KaonPIDModule,ElectronPIDModule,MuonPIDModule,TaggingModule,EventSelectionModule --nevents 100
+./OLeAA.exe --input_dir="Delphes_Output/" --output_file="OLeAA_Results.root" --config_file="example.tcl" --nevents=100
 ```
 
-This will load (by "globbing") all ROOT files found in ```Delphes_Output/```, write any eventual output to ```OLeAA_Results.root```, execute the modules KaonPIDModule, ElectronPIDModule, MuonPIDModule, TaggingModule, and EventSelectionModule in the specified order, and process just 100 events from the input ROOT files.
+This will load (by "globbing") all ROOT files found in ```Delphes_Output/```, write any eventual output to ```OLeAA_Results.root```, execute the modules KaonPIDModule, ElectronPIDModule, MuonPIDModule, and EventSelectionModule in the specified order (look inside example.tcl), and process just 100 events from the input ROOT files.
 
 ## Code Structure
 
@@ -84,9 +84,9 @@ Defines inline global analysis functions (e.g. flavor tagging computations, DIS 
 
 Particle ID efficiency maps have been introduced in the delphes_card_allsilicon_3T.tcl card. These model PID systems from eta=[-3.5,3.5], with an mRICH in the backward direction, a DIRC in the barrel, and a dualRICH in the forward direction. Below are example PID efficiency plots made using variables produced by OLeAA.
 
-![mRICH Kaon Efficiency](plots/mRICHTrack_KaonIDStudy.png)
-![Barrel DIRC Kaon Efficiency](plots/barrelDIRCTrack_KaonIDStudy.png)
-![Dual RICH Kaon Efficiency](plots/dualRICHTrack_KaonIDStudy.png)
+![mRICH Kaon Efficiency](images/mRICHTrack_KaonIDStudy.png)
+![Barrel DIRC Kaon Efficiency](images/barrelDIRCTrack_KaonIDStudy.png)
+![Dual RICH Kaon Efficiency](images/dualRICHTrack_KaonIDStudy.png)
 
 The variables produced by the OLeAA EventAnalysisModule that are relevant for studying track-level particle ID efficiency all begin with ```pid_track_*```. They are stored for every track in the angular coverage of the PID subsystems. The efficiency plots are made by projecting into two histograms the pT spectra of all tracks, or just tracks identified by a system, in the fiducial regions. To compute the ```X -> Y``` efficiency, the denominator (all tracks) histogram contains tracks that are truly of species ```X``` (```pid_track_true_pid```); the numerator histogram contains tracks reconstructed by the PID system as ```Y``` (```pid_track_reco_pid```).
 
