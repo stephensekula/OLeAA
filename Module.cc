@@ -1,8 +1,9 @@
 #include "Module.h"
 
-Module::Module(ExRootTreeReader* data)
+Module::Module(ExRootTreeReader* data, std::string name)
 {
   _data = data;
+  _name = name;
 }
 
 Module::~Module()

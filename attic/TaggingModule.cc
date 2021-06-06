@@ -11,7 +11,7 @@
 #include "TreeHandler.h"
 
 TaggingModule::TaggingModule(ExRootTreeReader* data)
-  : Module(data)
+  : Module(data, "TaggingModule")
 {
 
 }

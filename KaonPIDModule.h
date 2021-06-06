@@ -1,7 +1,26 @@
 #ifndef KAONPIDMODULE_HH
 #define KAONPIDMODULE_HH
 
+// C++ includes
+#include <vector>
+#include <map>
+#include <utility>
+#include <iostream>
+#include <iomanip>
+#include <fstream>
+#include <algorithm>
+
+// ROOT includes
+#include "TString.h"
+#include "TreeHandler.h"
+#include "TSystem.h"
+#include "TObjString.h"
+#include "TObjArray.h"
+#include "TClonesArray.h"
+
+// Other includes
 #include "Module.h"
+#include "AnalysisFunctions.cc"
 #include "classes/DelphesClasses.h"
 
 
@@ -9,7 +28,7 @@ class KaonPIDModule : public Module {
 
  public:
 
-  KaonPIDModule(ExRootTreeReader* data);
+  KaonPIDModule(ExRootTreeReader* data, std::string name);
 
   ~KaonPIDModule();
 
@@ -19,7 +38,7 @@ class KaonPIDModule : public Module {
 
  private:
 
-  bool KaonPID(Track* track, float kIDprob = 0.90, float separation = 3.0);
+  TObjArray* _outputList = nullptr;
 };
 
 #endif

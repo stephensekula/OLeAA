@@ -15,7 +15,7 @@
 #include <algorithm>
 
 EventSelectionModule::EventSelectionModule(ExRootTreeReader *data)
-  : Module(data)
+  : Module(data, "EventSelectionModule")
 {}
 
 EventSelectionModule::~EventSelectionModule()

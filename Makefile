@@ -1,4 +1,3 @@
-#delphes_path = $(DELPHES_PATH)
 CXX = g++
 CXXFLAGS = -std=c++17 -Wl,-rpath-link=$(shell pythia8-config  --libdir) $(shell root-config --cflags --ldflags --libs) -lEG -lTMVA
 CFILES   = $(wildcard *.cc)
@@ -12,6 +11,9 @@ build: check-env OLeAA.exe
 
 OLeAA.exe: *.cc
 	$(CXX) $(CXXFLAGS) $(INCLUDE) $(LIBS) -I. -o $@ $(CFILES) 
+
+debug: CXXFLAGS := -O0 -g3 -fno-inline $(CXXFLAGS) 
+debug: build
 
 
 clean:
