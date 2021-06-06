@@ -1,4 +1,4 @@
-#include "MuonPIDModule.h"
+#include "ElectronPIDModule.h"
 
 #include "TClonesArray.h"
 #include "TRandom3.h"
@@ -7,21 +7,22 @@
 #include "AnalysisFunctions.cc"
 
 #include <iostream>
+#include <algorithm>
 
-MuonPIDModule::MuonPIDModule(ExRootTreeReader* data)
-  : Module(data)
+ElectronPIDModule::ElectronPIDModule(ExRootTreeReader* data)
+  : Module(data, "ElectronPIDModule")
 {
 
 }
 
-MuonPIDModule::~MuonPIDModule()
+ElectronPIDModule::~ElectronPIDModule()
 {
 
 }
 
 
 
-bool MuonPIDModule::execute(std::map<std::string, std::any>* DataStore)
+bool ElectronPIDModule::execute(std::map<std::string, std::any>* DataStore)
 {
   auto data = getData();
 
@@ -37,23 +38,22 @@ bool MuonPIDModule::execute(std::map<std::string, std::any>* DataStore)
   // std::vector<Jet*> fiducial_jets = SelectorFcn<Jet>(all_jets, [](Jet* j){ return (TMath::Abs(j->Eta) < 3.0 && j->PT > 5.0); });
   // std::vector<Jet*> charmJets = SelectorFcn<Jet>(fiducial_jets, [](Jet* j){ return (j->Flavor == 4); });
 
-  std::vector<Track*> all_muons;
+  std::vector<Track*> all_electrons;
 
   // If the DataStore contains already a list of tracks to be used for PID assignment,
   // use that. If not, use the getEFlowTracks() method to get the general list of all tracks.
   // TracksForPID is special - it contains tracks NOT already used by another PID algorithm,
   // to avoid using the same track (pion) twice in two categories.
+  
+  float e_efficiency = 0.90;
+  float epi_separation = 2.4; //sigma
+  //float e_efficiency = 1.00;
+  //float epi_separation = 100.0; //sigma
 
-  float mu_efficiency = 0.95;
-  float mupi_separation = 2.0; //sigma
-  // float mu_efficiency = 1.0;
-  // float mupi_separation = 100.0; //sigma
-  
-  
   if (DataStore->find("TracksForPID") != DataStore->end()) {
     for (auto track : std::any_cast<std::vector<Track*>>((*DataStore)["TracksForPID"])) {
-      if (MuonPID(track, mu_efficiency, mupi_separation))
-	all_muons.push_back(track);
+      if (ElectronPID(track, e_efficiency, epi_separation))
+	all_electrons.push_back(track);
     } 
     
     
@@ -61,8 +61,8 @@ bool MuonPIDModule::execute(std::map<std::string, std::any>* DataStore)
     for (int itrk = 0; itrk < getEFlowTracks()->GetEntries(); itrk++)
       {
 	Track* track = (Track*) getEFlowTracks()->At(itrk);
-	if (MuonPID(track, mu_efficiency, mupi_separation))
-	  all_muons.push_back(track);
+	if (ElectronPID(track, e_efficiency, epi_separation))
+	  all_electrons.push_back(track);
       }
 
     std::vector<Track*> tracks_for_PID;
@@ -74,42 +74,45 @@ bool MuonPIDModule::execute(std::map<std::string, std::any>* DataStore)
     (*DataStore)["TracksForPID"] = tracks_for_PID;
   }
 
-  //auto reconstructed_muons = all_muons;
-  std::vector<Track*> reconstructed_muons = SelectorFcn<Track>(all_muons, [](Track* t){ return (t->PT >= 0.1); });
+  //auto reconstructed_electrons = all_electrons;
+  std::vector<Track*> reconstructed_electrons = SelectorFcn<Track>(all_electrons, 
+								   [](Track* t){ return (t->PT >= 0.1); });
   
   std::vector<Track*> tracks_for_PID = std::any_cast<std::vector<Track*>>((*DataStore)["TracksForPID"]);
-  for (auto muon : reconstructed_muons) {
-    tracks_for_PID.erase(std::find(tracks_for_PID.begin(), tracks_for_PID.end(), muon));
+  for (auto electron : reconstructed_electrons) {
+    tracks_for_PID.erase(std::find(tracks_for_PID.begin(), tracks_for_PID.end(), electron));
   }
   (*DataStore)["TracksForPID"] = tracks_for_PID;
-   
-  (*DataStore)["Muons"] = reconstructed_muons;
+  
+  
+  // store the electrons
+  (*DataStore)["Electrons"] = reconstructed_electrons;
 
 
   return true;
 }
 
 
-bool MuonPIDModule::MuonPID(Track* track, float muIDprob, float separation)
+bool ElectronPIDModule::ElectronPID(Track* track, float eIDprob, float separation)
 {
-  bool TrackIsMuon = false;
+  bool TrackIsElectron = false;
 
 
-  // Apply a basic parameterized muon PID to tracks. If the track is really a
-  // muon from truth information, apply a flat ID probability. If it's a pion,
+  // Apply a basic parameterized electron PID to tracks. If the track is really a
+  // electron from truth information, apply a flat ID probability. If it's a pion,
   // use the separation (in Gaussian sigma) to determine if it's mis-identified.
 
   if (track->PT < 0.1) 
-    return TrackIsMuon;
+    return TrackIsElectron;
 
   int track_truth = track->PID;
 
-  if (TMath::Abs(track_truth) == 13) {
-    // true charged muon
-    if (gRandom->Uniform(0, 1) <= muIDprob) {
-      TrackIsMuon = true;
+  if (TMath::Abs(track_truth) == 11) {
+    // true charged electron
+    if (gRandom->Uniform(0, 1) <= eIDprob) {
+      TrackIsElectron = true;
     } else {
-      TrackIsMuon = false;
+      TrackIsElectron = false;
     }
 
     
@@ -117,18 +120,18 @@ bool MuonPIDModule::MuonPID(Track* track, float muIDprob, float separation)
   } else if (TMath::Abs(track_truth) == 211) {
     // true charged pion
     if (gRandom->Uniform(0,1) <= ROOT::Math::gaussian_pdf(separation)) {
-      TrackIsMuon = true;
+      TrackIsElectron = true;
     } else {
-      TrackIsMuon = false;
+      TrackIsElectron = false;
     }
 
   } else {
     // ignore ALL other species for now
-    TrackIsMuon = false;
+    TrackIsElectron = false;
   }
 
 
-  return TrackIsMuon;
+  return TrackIsElectron;
 }
 
 

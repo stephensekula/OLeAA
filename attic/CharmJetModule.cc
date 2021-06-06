@@ -9,7 +9,7 @@
 #include <iostream>
 
 CharmJetModule::CharmJetModule(ExRootTreeReader* data)
-  : Module(data)
+  : Module(data, "CharmJetModule")
 {
 
 }

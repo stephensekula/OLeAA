@@ -8,13 +8,9 @@
 #include "external/ExRootAnalysis/ExRootTreeReader.h"
 
 #include "Module.h"
-#include "CharmJetModule.h"
 #include "KaonPIDModule.h"
-#include "ElectronPIDModule.h"
-#include "MuonPIDModule.h"
-#include "TaggingModule.h"
-#include "TaggingStudyModule.h"
-#include "EventSelectionModule.h"
+#include "RefinerModule.h"
+#include "TreeWriterModule.h"
 
 using namespace std;
 
@@ -40,36 +36,50 @@ class ModuleHandler {
     return this -> module_sequence;
   }
 
-  void addModule(std::string name) {
+  void addModule(std::string mod_class) {
+    addModule(mod_class, "");
+  }
+
+  void addModule(std::string mod_class, std::string mod_name) {
     Module* module = nullptr;
 
-    if (name == "CharmJetModule") {
-      module = new CharmJetModule(_data);
+    if (mod_class == "KaonPIDModule") {
+      module = new KaonPIDModule(_data, mod_name);
     }
-    else if (name == "KaonPIDModule") {
-      module = new KaonPIDModule(_data);
+    else if (mod_class == "JetRefinerModule") {
+      module = new JetRefinerModule(_data, mod_name);
     }
-    else if (name == "ElectronPIDModule") {
-      module = new ElectronPIDModule(_data);
+    else if (mod_class == "TrackRefinerModule") {
+      module = new TrackRefinerModule(_data, mod_name);
     }
-    else if (name == "MuonPIDModule") {
-      module = new MuonPIDModule(_data);
+    else if (mod_class == "ElectronRefinerModule") {
+      module = new ElectronRefinerModule(_data, mod_name);
     }
-    else if (name == "TaggingModule") {
-      module = new TaggingModule(_data);
+    else if (mod_class == "MuonRefinerModule") {
+      module = new MuonRefinerModule(_data, mod_name);
     }
-    else if (name == "TaggingStudyModule") {
-      module = new TaggingStudyModule(_data);
+    else if (mod_class == "NeutralRefinerModule") {
+      module = new NeutralRefinerModule(_data, mod_name);
     }
-    else if (name == "EventSelectionModule") {
-      module = new EventSelectionModule(_data);
+    else if (mod_class == "TreeWriterModule") {
+      module = new TreeWriterModule(_data, mod_name);
     } else {
-      std::cout << "ModuleHandler(): The requested module, " << name << ", is unknown to the ModuleHandler!" << std::endl;
+      std::cout << "ModuleHandler(): The requested module class, " << mod_class << ", is unknown to the ModuleHandler!" << std::endl;
       assert(1==1);
     }
 
     if (module != nullptr)
       this -> module_sequence.push_back(module);
+  }
+
+  Module* getModule(std::string mod_name)
+  {
+    for (auto m : this->module_sequence) {
+      if (m->getName() == mod_name) {
+	return m;
+      }
+    }
+    return nullptr;
   }
 
  private:

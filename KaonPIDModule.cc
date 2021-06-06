@@ -8,10 +8,10 @@
 
 #include <iostream>
 
-KaonPIDModule::KaonPIDModule(ExRootTreeReader* data)
-  : Module(data)
+KaonPIDModule::KaonPIDModule(ExRootTreeReader* data, std::string name)
+  : Module(data, name)
 {
-
+  _outputList = new TObjArray();
 }
 
 KaonPIDModule::~KaonPIDModule()
@@ -20,107 +20,107 @@ KaonPIDModule::~KaonPIDModule()
 }
 
 
-
 bool KaonPIDModule::execute(std::map<std::string, std::any>* DataStore)
 {
   auto data = getData();
 
-  // If event contains at least 1 jet
-  // std::vector<Jet*> all_jets;
-  // for (int ijet = 0; ijet < getJets()->GetEntries(); ijet++) 
-  //   {
-  //     // Take first jet
-  //     Jet *jet = (Jet*) getJets()->At(ijet);
-  //     all_jets.push_back(jet);
-  //   }
-
-  // std::vector<Jet*> fiducial_jets = SelectorFcn<Jet>(all_jets, [](Jet* j){ return (TMath::Abs(j->Eta) < 3.0 && j->PT > 5.0); });
-  // std::vector<Jet*> charmJets = SelectorFcn<Jet>(fiducial_jets, [](Jet* j){ return (j->Flavor == 4); });
-
-  std::vector<Track*> all_kaons;
-
-
-  if (DataStore->find("TracksForPID") != DataStore->end()) {
-    for (auto track : std::any_cast<std::vector<Track*>>((*DataStore)["TracksForPID"])) {
-      if (KaonPID(track, 0.90, 3.0))
-	all_kaons.push_back(track);
-    } 
-    
-    
-  } else {      
-    for (int itrk = 0; itrk < getEFlowTracks()->GetEntries(); itrk++)
-      {
-	Track* track = (Track*) getEFlowTracks()->At(itrk);
-	if (KaonPID(track, 0.90, 3.0))
-	  all_kaons.push_back(track);
-      }
-
-    std::vector<Track*> tracks_for_PID;
-    for (int itrk = 0; itrk < getEFlowTracks()->GetEntries(); itrk++) 
-      {
-	Track* track = (Track*) getEFlowTracks()->At(itrk);
-	tracks_for_PID.push_back(track);
-      }
-    (*DataStore)["TracksForPID"] = tracks_for_PID;
+  if (_outputList != nullptr && _outputList->GetEntries() > 0) {
+    _outputList->Clear();
   }
 
-  //auto reconstructed_kaons = all_kaons;
-   std::vector<Track*> reconstructed_kaons = SelectorFcn<Track>(all_kaons, [](Track* t){ return (t->PT >= 0.1); });
+  if ((*DataStore).find("mRICHTrack") == (*DataStore).end() ||
+      (*DataStore).find("barrelDIRCTrack") == (*DataStore).end() ||
+      (*DataStore).find("dualRICHagTrack") == (*DataStore).end() ||
+      (*DataStore).find("dualRICHcfTrack") == (*DataStore).end() ||
+      (*DataStore).find("Track") == (*DataStore).end()) {
+    std::stringstream message;
+    message << "Missing track lists from DataStore! [" << getName() << "::KaonPIDModule]" << std::endl;
+    throw std::runtime_error(message.str());
+    
+  }
 
-   std::vector<Track*> tracks_for_PID = std::any_cast<std::vector<Track*>>((*DataStore)["TracksForPID"]);
-   for (auto kaon : reconstructed_kaons) {
-     tracks_for_PID.erase(std::find(tracks_for_PID.begin(), tracks_for_PID.end(), kaon));
-   }
-   (*DataStore)["TracksForPID"] = tracks_for_PID;
-   
+  auto mRICHTrack     = std::any_cast<TClonesArray*>((*DataStore)["mRICHTrack"]);
+  auto barrelDIRCTrack = std::any_cast<TClonesArray*>((*DataStore)["barrelDIRCTrack"]);
+  auto dualRICHagTrack = std::any_cast<TClonesArray*>((*DataStore)["dualRICHagTrack"]);
+  auto dualRICHcfTrack = std::any_cast<TClonesArray*>((*DataStore)["dualRICHcfTrack"]);
+  auto RawTrack        = std::any_cast<TClonesArray*>((*DataStore)["Track"]);
 
-  (*DataStore)["Kaons"] = reconstructed_kaons;
+
+  if (mRICHTrack != nullptr) {
+    for (int itrk = 0; itrk < mRICHTrack->GetEntries(); itrk++) {
+      Track *track = (Track *)mRICHTrack->At(itrk);
+
+      if ((track->Eta  < -3.5) || (-1.0 < track->Eta)) continue;
+      
+      Int_t reco_pid = track->PID;
+
+      if (TMath::Abs(reco_pid) == 321) {
+	_outputList->AddLast(track);
+      }
+    }
+  }
+
+  if (barrelDIRCTrack != nullptr) {
+    for (int itrk = 0; itrk < barrelDIRCTrack->GetEntries(); itrk++) {
+      Track *track = (Track *)barrelDIRCTrack->At(itrk);
+      
+      if ((track->Eta  < -1.0) || (1.0 < track->Eta)) continue;
+      
+      Int_t reco_pid = track->PID;
+
+      if (TMath::Abs(reco_pid) == 321) {
+	_outputList->AddLast(track);
+      }
+    }
+  }
+
+
+  // Handle tracks in the forward direction (dualRICH)
+  for (Int_t t = 0; t < RawTrack->GetEntries(); t++) {
+    auto track = static_cast<Track*>(RawTrack->At(t));
+    if (1.0 <= track->Eta && track->Eta <= 3.5) {
+      Int_t final_pid = 0;
+      Double_t p_track = track->P4().Vect().Mag();
+      Double_t ag_p_threshold = 12.0;
+
+      if (p_track < ag_p_threshold) {
+	// region of sensitivity for Aerogel
+	if (dualRICHagTrack != nullptr) {
+	  for (int itrk = 0; itrk < dualRICHagTrack->GetEntries(); itrk++) {
+	    Track *track_ag = (Track *)dualRICHagTrack->At(itrk);
+	    if (track_ag->Particle == track->Particle) {
+	      final_pid = track_ag->PID;
+	      break;
+	    }
+	  }
+	}
+      } else {
+	if (dualRICHcfTrack != nullptr) {
+	  for (int itrk = 0; itrk < dualRICHcfTrack->GetEntries(); itrk++) {
+	    Track *track_cf = (Track *)dualRICHcfTrack->At(itrk);
+	    if (track_cf->Particle == track->Particle) {
+	      final_pid = track_cf->PID;
+	      break;
+	    }
+	  }
+	}
+      }
+      
+      Track drich_track = *track;
+      drich_track.PID = final_pid;
+      
+      if (TMath::Abs(final_pid) == 321) 
+	_outputList->AddLast(track);
+
+    }
+  }
+
+  (*DataStore)["ChargedKaon"] = _outputList;
 
 
   return true;
 }
 
-
-bool KaonPIDModule::KaonPID(Track* track, float kIDprob, float separation)
-{
-  bool TrackIsKaon = false;
-
-
-  // Apply a basic parameterized kaon PID to tracks. If the track is really a
-  // kaon from truth information, apply a flat ID probability. If it's a pion,
-  // use the separation (in Gaussian sigma) to determine if it's mis-identified.
-
-  if (track->PT < 0.1) 
-    return TrackIsKaon;
-
-  int track_truth = track->PID;
-
-  if (TMath::Abs(track_truth) == 321) {
-    // true charged kaon
-    if (gRandom->Uniform(0, 1) <= kIDprob) {
-      TrackIsKaon = true;
-    } else {
-      TrackIsKaon = false;
-    }
-
-    
-
-  } else if (TMath::Abs(track_truth) == 211) {
-    // true charged pion
-    if (gRandom->Uniform(0,1) <= ROOT::Math::gaussian_pdf(separation)) {
-      TrackIsKaon = true;
-    } else {
-      TrackIsKaon = false;
-    }
-
-  } else {
-    // ignore ALL other species for now
-    TrackIsKaon = false;
-  }
-
-
-  return TrackIsKaon;
-}
 
 
 

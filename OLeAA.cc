@@ -24,6 +24,7 @@
 
 #include "ModuleHandler.h"
 #include "TreeHandler.h"
+#include "JetTaggingTool.h"
 
 static std::string input_dir = "";
 static std::string output_file = "";
@@ -32,7 +33,7 @@ static int nevents = -1;
 
 ModuleHandler *ModuleHandler::instance = 0;
 TreeHandler *TreeHandler::instance = 0;
-
+JetTaggingTool *JetTaggingTool::instance = 0;
 
 // HELPER METHODS
 
@@ -172,7 +173,22 @@ int main(int argc, char *argv[])
       if(itModules != modules->end())
 	{
 	  std::cout << "   Appending module " << itModules->second.Data() << std::endl;
-	  module_handler->addModule(itModules->second.Data());
+	  std::cout << "              named " << itModules->first.Data() << std::endl;
+	  module_handler->addModule(itModules->second.Data(), itModules->first.Data());
+	  
+	  Module* the_module = module_handler->getModule(itModules->first.Data());
+	  if (the_module == nullptr) {
+	    stringstream message;
+	    message << "module '" << itModules->first.Data();
+	    message << " of type " << itModules->second.Data();
+	    message << "' could not be retrieved from the ModuleHandler after its creation.";
+	    throw runtime_error(message.str());
+	    
+	  } else {
+	    the_module->setConfiguration(confReader);
+	  }
+
+	  //module_handler->getModule(itModules->first.Data())->setConfiguration(confReader);
 	}
       else
 	{
@@ -185,16 +201,23 @@ int main(int argc, char *argv[])
 
 
   // Load object pointers
-  TClonesArray *branchJet = treeReader->UseBranch("Jet");
-  TClonesArray *branchElectron = treeReader->UseBranch("Electron");
-  TClonesArray *branchPhoton = treeReader->UseBranch("EFlowPhoton");
-  TClonesArray *branchNeutralHadron = treeReader->UseBranch("EFlowNeutralHadron");
-  TClonesArray *branchGenJet = treeReader->UseBranch("GenJet");
-  TClonesArray *branchGenParticle = treeReader->UseBranch("Particle");
-  TClonesArray *branchRawTrack = treeReader->UseBranch("Track");
-  TClonesArray *branchEFlowTrack = treeReader->UseBranch("EFlowTrack");
-  TClonesArray *branchMET = treeReader->UseBranch("MissingET");
+  std::map<TString, TClonesArray*> branchPointer;
+  branchPointer["Jet"] = treeReader->UseBranch("Jet");
+  branchPointer["Electron"] = treeReader->UseBranch("Electron");
+  branchPointer["EFlowPhoton"] = treeReader->UseBranch("EFlowPhoton");
+  branchPointer["EFlowNeutralHadron"] = treeReader->UseBranch("EFlowNeutralHadron");
+  branchPointer["GenJet"] = treeReader->UseBranch("GenJet");
+  branchPointer["Particle"] = treeReader->UseBranch("Particle");
+  branchPointer["Track"] = treeReader->UseBranch("Track");
+  branchPointer["EFlowTrack"] = treeReader->UseBranch("EFlowTrack");
+  branchPointer["MissingET"] = treeReader->UseBranch("MissingET");
 
+  branchPointer["mRICHTrack"] = treeReader->UseBranch("mRICHTrack");	     
+  branchPointer["barrelDIRCTrack"] = treeReader->UseBranch("barrelDIRCTrack");
+  branchPointer["dualRICHagTrack"] = treeReader->UseBranch("dualRICHagTrack");
+  branchPointer["dualRICHcfTrack"] = treeReader->UseBranch("dualRICHcfTrack");
+
+  
 
   // Setup the output storage
   TreeHandler *tree_handler = tree_handler->getInstance(output_file.c_str(), "tree");
@@ -227,18 +250,32 @@ int main(int argc, char *argv[])
     treeReader->ReadEntry(i);
 
     std::map<std::string, std::any> DataStore;
+    DataStore["Jet"] = branchPointer["Jet"];
+    DataStore["GenJet"] = branchPointer["GenJet"];
+    DataStore["Particle"] = branchPointer["Particle"];
+    DataStore["EFlowTrack"] = branchPointer["EFlowTrack"];
+    DataStore["Track"] = branchPointer["Track"];
+    DataStore["EFlowPhoton"] = branchPointer["EFlowPhoton"];
+    DataStore["Electron"] = branchPointer["Electron"];
+    DataStore["EFlowNeutralHadron"] = branchPointer["EFlowNeutralHadron"];
+    DataStore["MissingET"] = branchPointer["MissingET"];
 
+    // PID system branches (lists of particles ID'd using PID systems)
+    DataStore["mRICHTrack"]      = branchPointer["mRICHTrack"];
+    DataStore["barrelDIRCTrack"] = branchPointer["barrelDIRCTrack"];
+    DataStore["dualRICHagTrack"] = branchPointer["dualRICHagTrack"];
+    DataStore["dualRICHcfTrack"] = branchPointer["dualRICHcfTrack"];
 
     for (auto module : module_handler->getModules()) {
-      module->setJets(branchJet);
-      module->setGenJets(branchGenJet);
-      module->setEFlowTracks(branchEFlowTrack);
-      module->setTracks(branchRawTrack);
-      module->setGenParticles(branchGenParticle);
-      module->setPhotons(branchPhoton);
-      module->setElectrons(branchElectron);
-      module->setNeutralHadrons(branchNeutralHadron);
-      module->setMET(branchMET);
+      module->setJets(branchPointer["Jet"]);
+      module->setGenJets(branchPointer["GenJet"]);
+      module->setEFlowTracks(branchPointer["EFlowTrack"]);
+      module->setTracks(branchPointer["Track"]);
+      module->setGenParticles(branchPointer["Particle"]);
+      module->setPhotons(branchPointer["EFlowPhoton"]);
+      module->setElectrons(branchPointer["Electron"]);
+      module->setNeutralHadrons(branchPointer["EFlowNeutralHadron"]);
+      module->setMET(branchPointer["MissingET"]);
 
       bool result = module->execute(&DataStore);
       if (result == false) 
@@ -246,12 +283,23 @@ int main(int argc, char *argv[])
     }
 
     tree_handler->execute();
+
+    // Clean up the data store
+    // SJS: the DataStore contains object it owns and objects it does not
+    //      some of the latter are allocated using "new" and must be deleted.
+    //      this code slowly leaks memory because of this. FIX!
+    //      (problem: how to delete only objects we create in OLeAA?)
     
-
-    // if (DataStore.find("CharmJets") != DataStore.end()) {
-    //   std::vector<Jet*> charm_jets = std::any_cast<std::vector<Jet*>>(DataStore["CharmJets"]);
-    // }
-
+    for (auto datum : DataStore) {
+      try {
+	//TObjArray* store_obj = std::any_cast<TObjArray*>(datum.second);
+	// for (Int_t i = 0; i < array->GetEntries(); i++) {
+	//   array->At(i)->Delete();
+	// }
+	//store_obj->Delete();
+      } catch (const std::bad_any_cast& e) {
+      }
+    }
   }
 
   for (auto module : module_handler->getModules()) {

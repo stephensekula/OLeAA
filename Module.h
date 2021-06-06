@@ -9,6 +9,7 @@
 #include "TClonesArray.h"
 
 #include "external/ExRootAnalysis/ExRootTreeReader.h"
+#include "external/ExRootAnalysis/ExRootConfReader.h"
 
 #include "AnalysisFunctions.cc"
 
@@ -17,7 +18,7 @@ class Module {
 
  public:
 
-  Module(ExRootTreeReader* data);
+  Module(ExRootTreeReader* data, std::string name);
 
   ~Module();
 
@@ -26,7 +27,17 @@ class Module {
   virtual void finalize();
 
   ExRootTreeReader* getData() { return _data;};
+  std::string getName() {
+    return _name;
+  }
 
+  void setConfiguration( ExRootConfReader* config ) {
+    _config = config;
+  }
+
+  ExRootConfReader* getConfiguration() {
+    return _config;
+  }
 
   // Particle Objects
   void setJets(TClonesArray* jets) { _jets = jets; };
@@ -55,7 +66,8 @@ class Module {
  private:
 
   ExRootTreeReader* _data = nullptr; 
-
+  ExRootConfReader* _config = nullptr;
+  std::string _name = "";
 
   // Particle Object Array Pointers
   TClonesArray* _jets = nullptr;
@@ -70,6 +82,7 @@ class Module {
 
   TClonesArray* _genparticles = nullptr;
   TClonesArray* _genjets   = nullptr;
+
 
 
 };

@@ -3,22 +3,34 @@
 #######################################
 
 set ExecutionPath {
-  KaonPIDModule
-  ElectronPIDModule
-  MuonPIDModule
-  EventSelectionModule
+    TaggingElectron
+    Kaon
+    FiducialJet
+    TreeWriter
 }
 
-module ElectronPIDModule ElectronPIDModule {
+module ElectronRefinerModule TaggingElectron {
+    set inputList Electron
+    set outputList TaggingElectron
+    add selectors "PT 5.0:1000.0"
+    add selectors "Eta -4.0:4.0"
 }
 
-module MuonPIDModule MuonPIDModule {
+module KaonPIDModule Kaon {
+    set inputList nothing
 }
 
-module KaonPIDModule KaonPIDModule {
+module JetRefinerModule FiducialJet {
+    set inputList Jet
+    set outputList FiducialJet
+    add selectors "PT 5.0:1000.0"
+    add selectors "Eta -3.0:3.0"
 }
 
-module EventSelectionModule EventSelectionModule {
+module TreeWriterModule TreeWriter {
+    add branches {Event} {} {MET DIS}
+    add branches {Electron} {TaggingElectron} {Kinematics Truth}
+    add branches {Jet} {FiducialJet} {Kinematics Truth JetTagging}
 }
 
 

@@ -72,6 +72,7 @@ inline std::map<std::string, float>DISJacquetBlondel(TClonesArray *tracks,
                                                      TClonesArray *photons,
                                                      TClonesArray *neutral_hadrons)
 {
+
   // Jacquet-Blondel method:
   float delta_track = 0.0;
   auto  temp_p      = TVector3();
@@ -172,6 +173,24 @@ inline bool IsTaggingTrack(Track *track)
   return good_track;
 }
 
+inline float IP3D(Track* track)
+{
+  float d0 = TMath::Abs(track->D0);
+  float dd0 = TMath::Abs(track->ErrorD0);
+  float dz  = TMath::Abs(track->DZ);
+  float ddz = TMath::Abs(track->ErrorDZ);
+
+  return TMath::Sqrt(TMath::Power(d0 / dd0, 2) + TMath::Power(dz / ddz, 2));
+}
+
+inline float IP2D(Track* track)
+{
+  float d0 = TMath::Abs(track->D0);
+  float dd0 = TMath::Abs(track->ErrorD0);
+
+  return d0 / dd0;
+}
+
 inline float sIP3D(Jet *jet, Track *track)
 {
   const TLorentzVector& jetMomentum = jet->P4();
@@ -179,19 +198,14 @@ inline float sIP3D(Jet *jet, Track *track)
   float jpy                         = jetMomentum.Py();
   float jpz                         = jetMomentum.Pz();
 
-  float d0 = TMath::Abs(track->D0);
-
   float xd  = track->Xd;
   float yd  = track->Yd;
   float zd  = track->Zd;
-  float dd0 = TMath::Abs(track->ErrorD0);
-  float dz  = TMath::Abs(track->DZ);
-  float ddz = TMath::Abs(track->ErrorDZ);
 
   int sign = (jpx * xd + jpy * yd + jpz * zd > 0.0) ? 1 : -1;
 
   // add transverse and longitudinal significances in quadrature
-  float sip = sign * TMath::Sqrt(TMath::Power(d0 / dd0, 2) + TMath::Power(dz / ddz, 2));
+  float sip = sign * IP3D(track);
 
   // if (d0 > 3) { // 3mm maximum in d0
   if (!IsTaggingTrack(track) || TMath::IsNaN(sip) || !TMath::Finite(sip)) {
