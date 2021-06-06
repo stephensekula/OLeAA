@@ -34,7 +34,7 @@ For example, let's imagine you have produced a bunch of ROOT files using Delphes
 ./OLeAA.exe --input_dir="Delphes_Output/" --output_file="OLeAA_Results.root" --config_file="example.tcl" --nevents=100
 ```
 
-This will load (by "globbing") all ROOT files found in ```Delphes_Output/```, write any eventual output to ```OLeAA_Results.root```, execute the modules KaonPIDModule, ElectronPIDModule, MuonPIDModule, and EventSelectionModule in the specified order (look inside example.tcl), and process just 100 events from the input ROOT files.
+This will load (by "globbing") all ROOT files found in ```Delphes_Output/```, write any eventual output to ```OLeAA_Results.root```, execute the modules defined in the TCL configuration file in the specified order (look inside example.tcl), and process just 100 events from the input ROOT files.
 
 ## Code Structure
 
@@ -63,21 +63,71 @@ The base class of all analysis modules. This defines basic functions like initia
 
 The existing examples are:
 
-* {Kaon, Electron, Muon}PIDModule: takes tracks and uses truth-level information to mark a track as identified or not (as a kaon, muon, or electron, depending on the module)
-* TaggingModule: applies tagging methods to jets and returns a list of "charm jets" based on the tagging score.
-* TaggingStudyModule: a heavy module that loops over tagging hyper-parameters and writes out a large CSV file containing the results on light- and charm-jets of applying different configurations of tagging. This can be used to optimize the hyper-parameters. Don't use this as a matter of regular analysis.
-* EventSelectionModule: an example of an "analysis" module; it generates a cutflow output CSV file based on the selection criteria in its execute method. For now, it writes every event to the output tree even if the event fails a cut criterion. 
+* KaonPIDModule: takes tracks and uses PID detector information to build a list of "reconstructed and identified" kaons. These currently are NOT energy flow tracks, but are raw tracks. You can use the Candidate->Particle data member (it stores a TRef) to match EFlowTrack objects to the Kaon objects to get the EFlowTrack refined kinematics.
+* RefinerModule: takes a user-specific inputList (must be in the DataStore object defined in OLeAA.cc), runs selections on it (see below), and creates a new outputList with clones of the original candidates. 
+* TreeWriterModule: event-level (MET, DIS variables) and candidate-level information can be customized in blocks and written to disk in a ROOT file. For example, you can create a list of jets in the fiducial region of the detector and then save Kinematic, Truth, and Flavor-Tagging information to the output ROOT file for each candidate just in that list.
 
 ### AnalysisFunctions.h
 
 Defines inline global analysis functions (e.g. flavor tagging computations, DIS variables, etc.) that might be useful across modules. This would benefit from having a namespace that contains all its functions.
 
+### RefinerModule Syntax
+
+Here is an example:
+
+```
+module JetRefinerModule FiducialJet {
+    set inputList Jet
+    set outputList FiducialJet
+    add selectors "PT 5.0:1000.0"
+    add selectors "Eta -3.0:3.0"
+}
+
+```
+
+The nominal Delphes "Jet" list defined in the ```delphes_EIC``` card is loaded. Each Jet candidate is then subjected to the logical AND of a pair of requirements: the pT of each is between 5.0-1000.0 GeV and the pseudorapidity (Eta) of each is between -3.0 and 3.0, well inside the fiducial region of a tracking system that goes to -4.0 - 4.0 in eta. 
+
+Other variables currently supported:
+
+* PT: transverse momemtum of jet or particle
+* Eta: pseudorapidity of jet or particle
+* Phi: azimuthal angle of jet or particle
+* M: mass of jet or particle
+* Q: charge of jet or particle
+
+### TreeWriterModule
+
+Here is an example:
+
+```
+module TreeWriterModule TreeWriter {
+    add branches {Event} {} {MET DIS}
+    add branches {Electron} {TaggingElectron} {Kinematics Truth}
+    add branches {Jet} {FiducialJet} {Kinematics Truth JetTagging}
+}
+```
+
+This stores three super-block of information:
+
+* An "Event" block with no specified input list (that's how the code knows this is event-level). 
+* An "Electron" block using candidates from the list "TaggingElectron"
+* A "Jet" block using candidates from the list "FiducialJet"
+
+For event-level information, the current variable-level blocks are:
+
+* MET: ET and Phi
+* DIS: truth-level Bjorken x, y, and Q-squared; reconstruction-level Jacquet-Blondel x and Q-squared
+
+For candidate-level information:
+
+* Kinematics: PT, Eta, Phi, Mass
+* Truth: true particle or jet-level identity
+* JetTagging: information from specific taggers, like the signed-IP3D tagger, as well as supporting information about tracks (momentum, their impact parameter significance, etc.)
+
 
 ## Future Development Ideas
 
-* A text-based configuration file, rather than the command-line module sequence specification
-* Modules can be named so that there can be multiple instances, if needed, to perform distinct tasks. They can then be looked up by name.
-* Modules should be configurable using the text-based config file, rather than using hard-coded values for their functions, which is the current practice.
+* The DataStore map should be turned into a Singleton pattern class that is accessible by instance to all classes.
 * A CutFlow tool should be added to streamline the process of adding, incrementing, and saving cut flows.
 
 # Particle ID Studies
