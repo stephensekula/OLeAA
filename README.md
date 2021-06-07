@@ -132,7 +132,9 @@ For candidate-level information:
 * The DataStore map should be turned into a Singleton pattern class that is accessible by instance to all classes.
 * A CutFlow tool should be added to streamline the process of adding, incrementing, and saving cut flows.
 
-# Particle ID Studies
+# Particle ID Studies (OUT-OF-DATE)
+
+This section's code examples are out-of-date with the latest module generalization effort and need to be redone.
 
 Particle ID efficiency maps have been introduced in the delphes_card_allsilicon_3T.tcl card. These model PID systems from eta=[-3.5,3.5], with an mRICH in the backward direction, a DIRC in the barrel, and a dualRICH in the forward direction. Below are example PID efficiency plots made using variables produced by OLeAA.
 
