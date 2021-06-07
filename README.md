@@ -1,3 +1,5 @@
+![Logo - "Olivier-One" by Jean Victor Balin and available from OpenClipArt](images/OLeAA_logo.png)
+
 # Own Little e-A Analysis (OLeAA)
 
 * Based on ideas from the BaBar and ATLAS Experiments, including the SimpleComposition framework (BaBar) and the CxAOD2 framework (ATLAS)
