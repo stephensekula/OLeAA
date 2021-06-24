@@ -1,3 +1,5 @@
+![Logo - "Olivier-One" by Jean Victor Balin and available from OpenClipArt](images/OLeAA_logo.png)
+
 # Own Little e-A Analysis (OLeAA)
 
 * Based on ideas from the BaBar and ATLAS Experiments, including the SimpleComposition framework (BaBar) and the CxAOD2 framework (ATLAS)
@@ -64,7 +66,7 @@ The base class of all analysis modules. This defines basic functions like initia
 The existing examples are:
 
 * KaonPIDModule: takes tracks and uses PID detector information to build a list of "reconstructed and identified" kaons. These currently are NOT energy flow tracks, but are raw tracks. You can use the Candidate->Particle data member (it stores a TRef) to match EFlowTrack objects to the Kaon objects to get the EFlowTrack refined kinematics.
-* RefinerModule: takes a user-specific inputList (must be in the DataStore object defined in OLeAA.cc), runs selections on it (see below), and creates a new outputList with clones of the original candidates. 
+* RefinerModule: takes a user-specific inputList (must be in the DataStore object defined in OLeAA.cc), runs selections on it (see below), and creates a new outputList with clones of the original candidates. This is a template class to allow refinement of different kinds of objects with different interfaces. The current typedefs associated with this template class are: JetRefinerModule (Jet), TrackRefinerModule (Track), NeutralRefinerModule (Photon), ElectronRefinerModule (Electron, and MuonRefinerModule (Muon).
 * TreeWriterModule: event-level (MET, DIS variables) and candidate-level information can be customized in blocks and written to disk in a ROOT file. For example, you can create a list of jets in the fiducial region of the detector and then save Kinematic, Truth, and Flavor-Tagging information to the output ROOT file for each candidate just in that list.
 
 ### AnalysisFunctions.h
@@ -130,7 +132,9 @@ For candidate-level information:
 * The DataStore map should be turned into a Singleton pattern class that is accessible by instance to all classes.
 * A CutFlow tool should be added to streamline the process of adding, incrementing, and saving cut flows.
 
-# Particle ID Studies
+# Particle ID Studies (OUT-OF-DATE)
+
+This section's code examples are out-of-date with the latest module generalization effort and need to be redone.
 
 Particle ID efficiency maps have been introduced in the delphes_card_allsilicon_3T.tcl card. These model PID systems from eta=[-3.5,3.5], with an mRICH in the backward direction, a DIRC in the barrel, and a dualRICH in the forward direction. Below are example PID efficiency plots made using variables produced by OLeAA.
 
