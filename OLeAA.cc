@@ -211,6 +211,7 @@ int main(int argc, char *argv[])
   branchPointer["Track"] = treeReader->UseBranch("Track");
   branchPointer["EFlowTrack"] = treeReader->UseBranch("EFlowTrack");
   branchPointer["MissingET"] = treeReader->UseBranch("MissingET");
+  branchPointer["Tower"] = treeReader->UseBranch("Tower");
 
   branchPointer["mRICHTrack"] = treeReader->UseBranch("mRICHTrack");	     
   branchPointer["barrelDIRCTrack"] = treeReader->UseBranch("barrelDIRCTrack");
@@ -259,6 +260,7 @@ int main(int argc, char *argv[])
     DataStore["Electron"] = branchPointer["Electron"];
     DataStore["EFlowNeutralHadron"] = branchPointer["EFlowNeutralHadron"];
     DataStore["MissingET"] = branchPointer["MissingET"];
+    DataStore["Tower"] = branchPointer["Tower"];
 
     // PID system branches (lists of particles ID'd using PID systems)
     DataStore["mRICHTrack"]      = branchPointer["mRICHTrack"];

@@ -6,6 +6,19 @@ TreeWriterModule::TreeWriterModule(ExRootTreeReader *data, std::string name)
 {
   _global_vars = std::map<TString, Double_t>();
   _candidate_vars = std::map<TString, std::vector<Double_t>>();
+
+
+  _mpi = TDatabasePDG().GetParticle(211)->Mass();
+  _mK = TDatabasePDG().GetParticle(321)->Mass();
+  _me = TDatabasePDG().GetParticle(11)->Mass();
+  _mmu = TDatabasePDG().GetParticle(13)->Mass();
+  _mp = TDatabasePDG().GetParticle(2212)->Mass();
+
+
+  // Correcting ECAL/HCAL energy distribution using Full Simulation
+  _cache_emfrac = std::map<SortableObject*, Double_t>();
+  _emfrac_file = TFile::Open("share/EMRatioPDFs.root");
+
 }
 
 TreeWriterModule::~TreeWriterModule()
@@ -62,22 +75,51 @@ void TreeWriterModule::initialize()
 	    _candidate_vars[prefix + "_KIN_Eta"] = std::vector<Double_t>();
 	    _candidate_vars[prefix + "_KIN_Phi"] = std::vector<Double_t>();
 	    _candidate_vars[prefix + "_KIN_M"] = std::vector<Double_t>();
+	  } else if (varName == "Calorimeter") {
+	    _candidate_vars[prefix + "_CALO_Eem"] = std::vector<Double_t>();
+	    _candidate_vars[prefix + "_CALO_Ehad"] = std::vector<Double_t>();
 	  } else if (varName == "Truth") {
 	    _candidate_vars[prefix + "_TRU_ID"] = std::vector<Double_t>();
 	  } else if (varName == "JetTagging") {
+	    _candidate_vars[prefix + "_TAG_jet_charge_05"] = std::vector<Double_t>();
 	    _candidate_vars[prefix + "_TAG_sIP3DTagger"] = std::vector<Double_t>();
+	    _candidate_vars[prefix + "_TAG_kTagger"] = std::vector<Double_t>();
 	    _candidate_vars[prefix + "_TAG_t1_PT"] = std::vector<Double_t>();
+	    _candidate_vars[prefix + "_TAG_t1_d0"] = std::vector<Double_t>();
+	    _candidate_vars[prefix + "_TAG_t1_d0err"] = std::vector<Double_t>();
+	    _candidate_vars[prefix + "_TAG_t1_z0"] = std::vector<Double_t>();
+	    _candidate_vars[prefix + "_TAG_t1_z0err"] = std::vector<Double_t>();
 	    _candidate_vars[prefix + "_TAG_t1_sIP3D"] = std::vector<Double_t>();
 	    _candidate_vars[prefix + "_TAG_t2_PT"] = std::vector<Double_t>();
+	    _candidate_vars[prefix + "_TAG_t2_d0"] = std::vector<Double_t>();
+	    _candidate_vars[prefix + "_TAG_t2_d0err"] = std::vector<Double_t>();
+	    _candidate_vars[prefix + "_TAG_t2_z0"] = std::vector<Double_t>();
+	    _candidate_vars[prefix + "_TAG_t2_z0err"] = std::vector<Double_t>();
 	    _candidate_vars[prefix + "_TAG_t2_sIP3D"] = std::vector<Double_t>();
 	    _candidate_vars[prefix + "_TAG_t3_PT"] = std::vector<Double_t>();
+	    _candidate_vars[prefix + "_TAG_t3_d0"] = std::vector<Double_t>();
+	    _candidate_vars[prefix + "_TAG_t3_d0err"] = std::vector<Double_t>();
+	    _candidate_vars[prefix + "_TAG_t3_z0"] = std::vector<Double_t>();
+	    _candidate_vars[prefix + "_TAG_t3_z0err"] = std::vector<Double_t>();
 	    _candidate_vars[prefix + "_TAG_t3_sIP3D"] = std::vector<Double_t>();
 	    _candidate_vars[prefix + "_TAG_t4_PT"] = std::vector<Double_t>();
+	    _candidate_vars[prefix + "_TAG_t4_d0"] = std::vector<Double_t>();
+	    _candidate_vars[prefix + "_TAG_t4_d0err"] = std::vector<Double_t>();
+	    _candidate_vars[prefix + "_TAG_t4_z0"] = std::vector<Double_t>();
+	    _candidate_vars[prefix + "_TAG_t4_z0err"] = std::vector<Double_t>();
 	    _candidate_vars[prefix + "_TAG_t4_sIP3D"] = std::vector<Double_t>();
 	    _candidate_vars[prefix + "_TAG_k1_PT"] = std::vector<Double_t>();
+	    _candidate_vars[prefix + "_TAG_k1_q"] = std::vector<Double_t>();
 	    _candidate_vars[prefix + "_TAG_k1_sIP3D"] = std::vector<Double_t>();
 	    _candidate_vars[prefix + "_TAG_k2_PT"] = std::vector<Double_t>();
+	    _candidate_vars[prefix + "_TAG_k2_q"] = std::vector<Double_t>();
 	    _candidate_vars[prefix + "_TAG_k2_sIP3D"] = std::vector<Double_t>();
+	    _candidate_vars[prefix + "_TAG_e1_PT"] = std::vector<Double_t>();
+	    _candidate_vars[prefix + "_TAG_e1_sIP3D"] = std::vector<Double_t>();
+	    // _candidate_vars[prefix + "_TAG_e1_EhadOverEM"] = std::vector<Double_t>();
+	    _candidate_vars[prefix + "_TAG_e2_PT"] = std::vector<Double_t>();
+	    _candidate_vars[prefix + "_TAG_e2_sIP3D"] = std::vector<Double_t>();
+	    // _candidate_vars[prefix + "_TAG_e2_EhadOverEM"] = std::vector<Double_t>();
 	  }
 	}
 
@@ -115,6 +157,12 @@ void TreeWriterModule::finalize()
 
 bool TreeWriterModule::execute(std::map<std::string, std::any> *DataStore)
 {
+
+  // Clear any caches
+  _cache_emfrac.clear();
+
+  // Proceed to process the event
+
   auto data = getData();
 
   // Compute global DIS variables
@@ -194,6 +242,8 @@ bool TreeWriterModule::execute(std::map<std::string, std::any> *DataStore)
 	auto candidate = candidateList->At(c);
 	if (itc->first.Contains("_KIN_")) {
 	  itc->second.push_back(kinVar(itc->first,candidate));
+	} else if (itc->first.Contains("_CALO_")) {
+	  itc->second.push_back(caloVar(itc->first, candidate, DataStore));
 	} else if (itc->first.Contains("TRU_ID")) {
 	  itc->second.push_back(truthID(candidate));
 	} else if (itc->first.Contains("_TAG_")) {

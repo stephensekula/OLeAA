@@ -5,6 +5,7 @@
 set ExecutionPath {
     TaggingElectron
     Kaon
+    Electron
     FiducialJet
     TreeWriter
 }
@@ -17,7 +18,9 @@ module ElectronRefinerModule TaggingElectron {
 }
 
 module KaonPIDModule Kaon {
-    set inputList nothing
+}
+
+module ElectronPIDModule Electron {
 }
 
 module JetRefinerModule FiducialJet {
@@ -30,6 +33,7 @@ module JetRefinerModule FiducialJet {
 module TreeWriterModule TreeWriter {
     add branches {Event} {} {MET DIS}
     add branches {Electron} {TaggingElectron} {Kinematics Truth}
+    add branches {Electron} {ChargedElectron} {Kinematics Calorimeter Truth}
     add branches {Jet} {FiducialJet} {Kinematics Truth JetTagging}
 }
 

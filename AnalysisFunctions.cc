@@ -147,6 +147,28 @@ inline std::map<std::string, float>DISJacquetBlondel(TClonesArray *tracks,
 }
 
 //
+// Jet Functions
+//
+
+inline Double_t JetCharge(Jet* jet, TClonesArray* tracks, Double_t kappa = 0.5)
+{
+  Double_t jet_Q = -99.0;
+
+  for (auto obj_track : *tracks) {
+    auto track = static_cast<Track *>(obj_track);
+
+    if (track->P4().DeltaR(jet->P4()) < 0.5) {
+      if (jet_Q == -99.0) {
+	jet_Q = 0.0;
+      }
+      jet_Q += track->Charge * TMath::Power(track->PT, kappa);
+    }
+  }
+  jet_Q /= TMath::Power(jet->PT, kappa);
+
+  return jet_Q;
+}
+//
 // Tagging Methods
 //
 
@@ -361,5 +383,6 @@ inline bool Tagged_sIP3D(Jet *jet, TClonesArray tracks,
 
   return tagged;
 }
+
 
 #endif // ifndef ANALYSISFUNCTIONS

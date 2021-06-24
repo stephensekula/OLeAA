@@ -122,7 +122,7 @@ else:
         os.makedirs(taskdir)
 
     # Copy or Link needed files to working directory
-    subprocess.call(f"cp -a mva_taggers {taskdir}/", shell=True);
+    subprocess.call(f"cp -a share {taskdir}/", shell=True);
     subprocess.call(f"cp -a {args.config} {taskdir}/", shell=True);
     # Execute the study
     subprocess.call(f'cd {taskdir}; OLeAA.exe --input_dir {root_file} --output_file out.root --config_file "{args.config}"', shell=True)

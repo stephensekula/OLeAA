@@ -66,6 +66,32 @@ public:
  private:
   // Methods internal to the class
 
+  //
+  // Class-dependent object cloning
+  //
+  template<typename U = T>
+  typename std::enable_if<std::is_same<U, Track>::value>::type
+  Clone(U* obj, U* clone)
+  {
+    clone = static_cast<U*>(obj->Clone());
+    clone->Particle = obj->Particle;
+  }
+
+  template<typename U = T>
+  typename std::enable_if<std::is_same<U, Jet>::value>::type
+  Clone(U* obj, U* clone)
+  {
+    clone = static_cast<U*>(obj->Clone());
+  }
+
+  template<typename U = T>
+  typename std::enable_if<std::is_same<U, Photon>::value>::type
+  Clone(U* obj, U* clone)
+  {
+    clone = static_cast<U*>(obj->Clone());
+  }
+
+
 };
 
 template class RefinerModule<Jet>;

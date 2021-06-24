@@ -165,8 +165,10 @@ template <class T> bool RefinerModule<T>::execute(std::map<std::string, std::any
       }
 
     }
-    if (keepCandidate)
-      _outputList->AddLast(static_cast<Candidate*>(candidate->Clone()));
+    if (keepCandidate) {
+      Candidate* new_candidate = static_cast<Candidate*>(candidate->Clone());
+      _outputList->AddLast(new_candidate);
+    }
   }
 
   // std::cout << "[" << getName() << "::RefinerModule]: candidate reduction is "<< inputList->GetEntries() << " => " << _outputList->GetEntries() << std::endl;

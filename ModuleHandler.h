@@ -9,6 +9,7 @@
 
 #include "Module.h"
 #include "KaonPIDModule.h"
+#include "ElectronPIDModule.h"
 #include "RefinerModule.h"
 #include "TreeWriterModule.h"
 
@@ -45,6 +46,9 @@ class ModuleHandler {
 
     if (mod_class == "KaonPIDModule") {
       module = new KaonPIDModule(_data, mod_name);
+    }
+    else if (mod_class == "ElectronPIDModule") {
+      module = new ElectronPIDModule(_data, mod_name);
     }
     else if (mod_class == "JetRefinerModule") {
       module = new JetRefinerModule(_data, mod_name);

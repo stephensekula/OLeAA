@@ -12,6 +12,7 @@ KaonPIDModule::KaonPIDModule(ExRootTreeReader* data, std::string name)
   : Module(data, name)
 {
   _outputList = new TObjArray();
+  _kaon_mass = TDatabasePDG().GetParticle(321)->Mass();
 }
 
 KaonPIDModule::~KaonPIDModule()
@@ -24,9 +25,6 @@ bool KaonPIDModule::execute(std::map<std::string, std::any>* DataStore)
 {
   auto data = getData();
 
-  if (_outputList != nullptr && _outputList->GetEntries() > 0) {
-    _outputList->Clear();
-  }
 
   if ((*DataStore).find("mRICHTrack") == (*DataStore).end() ||
       (*DataStore).find("barrelDIRCTrack") == (*DataStore).end() ||
@@ -46,6 +44,13 @@ bool KaonPIDModule::execute(std::map<std::string, std::any>* DataStore)
   auto RawTrack        = std::any_cast<TClonesArray*>((*DataStore)["Track"]);
 
 
+  if (_outputList != nullptr && _outputList->GetEntries() > 0) {
+    for (Int_t i = 0; i < _outputList->GetEntries(); i++) {
+      delete _outputList->At(i);
+    }
+    _outputList->Clear();
+  }
+
   if (mRICHTrack != nullptr) {
     for (int itrk = 0; itrk < mRICHTrack->GetEntries(); itrk++) {
       Track *track = (Track *)mRICHTrack->At(itrk);
@@ -55,7 +60,7 @@ bool KaonPIDModule::execute(std::map<std::string, std::any>* DataStore)
       Int_t reco_pid = track->PID;
 
       if (TMath::Abs(reco_pid) == 321) {
-	_outputList->AddLast(track);
+	_outputList->AddLast(newKaon(track));
       }
     }
   }
@@ -69,7 +74,7 @@ bool KaonPIDModule::execute(std::map<std::string, std::any>* DataStore)
       Int_t reco_pid = track->PID;
 
       if (TMath::Abs(reco_pid) == 321) {
-	_outputList->AddLast(track);
+	_outputList->AddLast(newKaon(track));
       }
     }
   }
@@ -88,7 +93,7 @@ bool KaonPIDModule::execute(std::map<std::string, std::any>* DataStore)
 	if (dualRICHagTrack != nullptr) {
 	  for (int itrk = 0; itrk < dualRICHagTrack->GetEntries(); itrk++) {
 	    Track *track_ag = (Track *)dualRICHagTrack->At(itrk);
-	    if (track_ag->Particle == track->Particle) {
+	    if (track_ag->Particle.GetObject() == track->Particle.GetObject()) {
 	      final_pid = track_ag->PID;
 	      break;
 	    }
@@ -98,7 +103,7 @@ bool KaonPIDModule::execute(std::map<std::string, std::any>* DataStore)
 	if (dualRICHcfTrack != nullptr) {
 	  for (int itrk = 0; itrk < dualRICHcfTrack->GetEntries(); itrk++) {
 	    Track *track_cf = (Track *)dualRICHcfTrack->At(itrk);
-	    if (track_cf->Particle == track->Particle) {
+	    if (track_cf->Particle.GetObject() == track->Particle.GetObject()) {
 	      final_pid = track_cf->PID;
 	      break;
 	    }
@@ -110,15 +115,40 @@ bool KaonPIDModule::execute(std::map<std::string, std::any>* DataStore)
       drich_track.PID = final_pid;
       
       if (TMath::Abs(final_pid) == 321) 
-	_outputList->AddLast(track);
+	_outputList->AddLast(newKaon(&drich_track));
 
     }
+
+
   }
+
+
+
 
   (*DataStore)["ChargedKaon"] = _outputList;
 
 
   return true;
+}
+
+
+Track* KaonPIDModule::newKaon(Track* track)
+{
+  if (track != nullptr) {
+      Track* charged_kaon = static_cast<Track*>(track->Clone());
+      auto p4 = charged_kaon->P4();
+      p4.SetPtEtaPhiM(charged_kaon->PT, charged_kaon->Eta, charged_kaon->Phi, _kaon_mass);
+      charged_kaon->PT = p4.Pt();
+      charged_kaon->Eta = p4.Eta();
+      charged_kaon->Phi = p4.Phi();
+      charged_kaon->Mass = p4.M();
+
+      charged_kaon->Particle = track->Particle;
+
+      return charged_kaon;
+    }
+
+  return nullptr;
 }
 
 
