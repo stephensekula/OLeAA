@@ -228,9 +228,9 @@ inline float sIP3D(Jet *jet, Track *track, GenParticle *beamspot = nullptr)
   float bsz = 0;
 
   if (beamspot != nullptr) {
-    bsx = beamspot->Position.X();
-    bsy = beamspot->Position.Y();
-    bsz = beamspot->Position.Z();
+    bsx = beamspot->X;
+    bsy = beamspot->Y;
+    bsz = beamspot->Z;
   }
 
   int sign = (jpx * (xd - bsx) + jpy * (yd - bsy) + jpz * (zd - bsz) > 0.0) ? 1 : -1;
