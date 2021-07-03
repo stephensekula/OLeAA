@@ -323,7 +323,8 @@ inline bool Tagged_Muon(Jet *jet, std::vector<Track *>muons, float minSignif, fl
 }
 
 inline bool Tagged_sIP3D(Jet *jet, TClonesArray tracks,
-                         float minSignif, float minPT, int minTracks)
+                         float minSignif, float minPT, int minTracks,
+                         GenParticle *BeamSpot = nullptr)
 {
   bool tagged = false;
 
@@ -361,7 +362,7 @@ inline bool Tagged_sIP3D(Jet *jet, TClonesArray tracks,
       // float z0 = TMath::Abs(track->DZ);
       if (!IsTaggingTrack(track)) continue;
 
-      float sip = sIP3D(jet, track);
+      float sip = sIP3D(jet, track, BeamSpot);
 
 
       if (sip > minSignif) N_sIPtrack++;
