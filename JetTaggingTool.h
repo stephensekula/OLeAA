@@ -230,7 +230,9 @@ class JetTaggingTool {
 	Double_t k1_q = _jet_tagging_store[jet].k1_q;
 	Double_t k1_sIP3D = _jet_tagging_store[jet].k1_sIP3D;
 	
-	kTagged = (k1_pt < 3.5 && k1_pt > 0.0) && (TMath::Abs(k1_sIP3D)>4.0) & (k1_q > 0.0);
+	Double_t k1_pt_ratio = k1_pt/jet->PT;
+
+	kTagged = (0.1 < k1_pt_ratio && k1_pt_ratio < 0.4) && (TMath::Abs(k1_sIP3D)>4.0) & (k1_q > 0.0);
       }
       _jet_tagging_store[jet].kTagged = kTagged;
     }
