@@ -18,7 +18,7 @@
 // Template functions for applying cuts and selecting subsets of particle lists
 
 template<class T>std::vector<T *>                                  SelectorFcn(std::vector<T *>particles,
-                                                              bool                             selector(T *))
+                                                              bool selector(T *))
 {
   std::vector<T *> output_list;
 
@@ -59,6 +59,7 @@ inline std::map<std::string, float>DISVariables(TClonesArray *branchParticle)
 
 
   std::map<std::string, float> dis_variables;
+
   dis_variables["Q2"] = Q2;
   dis_variables["W2"] = W2;
   dis_variables["x"]  = x;
@@ -72,7 +73,6 @@ inline std::map<std::string, float>DISJacquetBlondel(TClonesArray *tracks,
                                                      TClonesArray *photons,
                                                      TClonesArray *neutral_hadrons)
 {
-
   // Jacquet-Blondel method:
   float delta_track = 0.0;
   auto  temp_p      = TVector3();
@@ -80,8 +80,7 @@ inline std::map<std::string, float>DISJacquetBlondel(TClonesArray *tracks,
   for (int i = 0; i < tracks->GetEntries(); i++) {
     auto track_mom = static_cast<Track *>(tracks->At(i))->P4();
 
-    if (isnan(track_mom.E()))
-      continue;
+    if (isnan(track_mom.E())) continue;
     delta_track += (track_mom.E() - track_mom.Pz());
     temp_p       = temp_p + track_mom.Vect();
   }
@@ -101,8 +100,7 @@ inline std::map<std::string, float>DISJacquetBlondel(TClonesArray *tracks,
   for (int i = 0; i < photons->GetEntries(); i++) {
     auto pf_mom = static_cast<Photon *>(photons->At(i))->P4();
 
-    if (isnan(pf_mom.E()))
-      continue;
+    if (isnan(pf_mom.E())) continue;
     delta_photon += (pf_mom.E() - pf_mom.Pz());
     temp_p        = temp_p + pf_mom.Vect();
   }
@@ -114,8 +112,7 @@ inline std::map<std::string, float>DISJacquetBlondel(TClonesArray *tracks,
   for (int i = 0; i < neutral_hadrons->GetEntries(); i++) {
     auto pf_mom = static_cast<Tower *>(neutral_hadrons->At(i))->P4();
 
-    if (isnan(pf_mom.E()))
-      continue;
+    if (isnan(pf_mom.E())) continue;
     delta_neutral += (pf_mom.E() - pf_mom.Pz());
     temp_p         = temp_p + pf_mom.Vect();
 
@@ -150,7 +147,7 @@ inline std::map<std::string, float>DISJacquetBlondel(TClonesArray *tracks,
 // Jet Functions
 //
 
-inline Double_t JetCharge(Jet* jet, TClonesArray* tracks, Double_t kappa = 0.5)
+inline Double_t JetCharge(Jet *jet, TClonesArray *tracks, Double_t kappa = 0.5)
 {
   Double_t jet_Q = -99.0;
 
@@ -159,7 +156,7 @@ inline Double_t JetCharge(Jet* jet, TClonesArray* tracks, Double_t kappa = 0.5)
 
     if (track->P4().DeltaR(jet->P4()) < 0.5) {
       if (jet_Q == -99.0) {
-	jet_Q = 0.0;
+        jet_Q = 0.0;
       }
       jet_Q += track->Charge * TMath::Power(track->PT, kappa);
     }
@@ -168,6 +165,7 @@ inline Double_t JetCharge(Jet* jet, TClonesArray* tracks, Double_t kappa = 0.5)
 
   return jet_Q;
 }
+
 //
 // Tagging Methods
 //
@@ -195,9 +193,9 @@ inline bool IsTaggingTrack(Track *track)
   return good_track;
 }
 
-inline float IP3D(Track* track)
+inline float IP3D(Track *track)
 {
-  float d0 = TMath::Abs(track->D0);
+  float d0  = TMath::Abs(track->D0);
   float dd0 = TMath::Abs(track->ErrorD0);
   float dz  = TMath::Abs(track->DZ);
   float ddz = TMath::Abs(track->ErrorDZ);
@@ -205,26 +203,37 @@ inline float IP3D(Track* track)
   return TMath::Sqrt(TMath::Power(d0 / dd0, 2) + TMath::Power(dz / ddz, 2));
 }
 
-inline float IP2D(Track* track)
+inline float IP2D(Track *track)
 {
-  float d0 = TMath::Abs(track->D0);
+  float d0  = TMath::Abs(track->D0);
   float dd0 = TMath::Abs(track->ErrorD0);
 
   return d0 / dd0;
 }
 
-inline float sIP3D(Jet *jet, Track *track)
+inline float sIP3D(Jet *jet, Track *track, GenParticle *beamspot = nullptr)
 {
   const TLorentzVector& jetMomentum = jet->P4();
   float jpx                         = jetMomentum.Px();
   float jpy                         = jetMomentum.Py();
   float jpz                         = jetMomentum.Pz();
 
-  float xd  = track->Xd;
-  float yd  = track->Yd;
-  float zd  = track->Zd;
+  float xd = track->Xd;
+  float yd = track->Yd;
+  float zd = track->Zd;
 
-  int sign = (jpx * xd + jpy * yd + jpz * zd > 0.0) ? 1 : -1;
+  // handle a non-origin beamspot
+  float bsx = 0;
+  float bsy = 0;
+  float bsz = 0;
+
+  if (beamspot != nullptr) {
+    bsx = beamspot->Position.X();
+    bsy = beamspot->Position.Y();
+    bsz = beamspot->Position.Z();
+  }
+
+  int sign = (jpx * (xd - bsx) + jpy * (yd - bsy) + jpz * (zd - bsz) > 0.0) ? 1 : -1;
 
   // add transverse and longitudinal significances in quadrature
   float sip = sign * IP3D(track);
@@ -245,23 +254,18 @@ inline bool Tagged_Kaon(Jet *jet, std::vector<Track *>kaons, float minSignif, fl
   int  kaon_count = 0;
 
   for (auto kaon : kaons) {
-    if (kaon->P4().DeltaR(jet->P4()) > 0.5)
-      continue;
+    if (kaon->P4().DeltaR(jet->P4()) > 0.5) continue;
 
-    if (kaon->PT < minPT)
-      continue;
+    if (kaon->PT < minPT) continue;
 
-    if (!IsTaggingTrack(kaon))
-      continue;
+    if (!IsTaggingTrack(kaon)) continue;
 
 
-    if (sIP3D(jet, kaon) < minSignif)
-      continue;
+    if (sIP3D(jet, kaon) < minSignif) continue;
 
     kaon_count++;
 
-    if (kaon_count >= minKaons)
-      break;
+    if (kaon_count >= minKaons) break;
   }
 
   tagged = (kaon_count >= minKaons);
@@ -275,22 +279,17 @@ inline bool Tagged_Electron(Jet *jet, std::vector<Track *>electrons, float minSi
   int  electron_count = 0;
 
   for (auto electron : electrons) {
-    if (electron->P4().DeltaR(jet->P4()) > 0.5)
-      continue;
+    if (electron->P4().DeltaR(jet->P4()) > 0.5) continue;
 
-    if (electron->PT < minPT)
-      continue;
+    if (electron->PT < minPT) continue;
 
-    if (!IsTaggingTrack(electron))
-      continue;
+    if (!IsTaggingTrack(electron)) continue;
 
-    if (sIP3D(jet, electron) < minSignif)
-      continue;
+    if (sIP3D(jet, electron) < minSignif) continue;
 
     electron_count++;
 
-    if (electron_count >= minElectrons)
-      break;
+    if (electron_count >= minElectrons) break;
   }
 
   tagged = (electron_count >= minElectrons);
@@ -304,23 +303,18 @@ inline bool Tagged_Muon(Jet *jet, std::vector<Track *>muons, float minSignif, fl
   int  muon_count = 0;
 
   for (auto muon : muons) {
-    if (muon->P4().DeltaR(jet->P4()) > 0.5)
-      continue;
+    if (muon->P4().DeltaR(jet->P4()) > 0.5) continue;
 
-    if (muon->PT < minPT)
-      continue;
+    if (muon->PT < minPT) continue;
 
-    if (!IsTaggingTrack(muon))
-      continue;
+    if (!IsTaggingTrack(muon)) continue;
 
-    if (sIP3D(jet, muon) < minSignif)
-      continue;
+    if (sIP3D(jet, muon) < minSignif) continue;
 
 
     muon_count++;
 
-    if (muon_count >= minMuons)
-      break;
+    if (muon_count >= minMuons) break;
   }
 
   tagged = (muon_count >= minMuons);
@@ -346,8 +340,7 @@ inline bool Tagged_sIP3D(Jet *jet, TClonesArray tracks,
   // std::endl;
 
   for (int iconst = 0; iconst < jet_constituents.GetEntries(); iconst++) {
-    if (N_sIPtrack >= minTracks)
-      break;
+    if (N_sIPtrack >= minTracks) break;
 
     auto constituent = jet_constituents.At(iconst);
 
@@ -361,14 +354,12 @@ inline bool Tagged_sIP3D(Jet *jet, TClonesArray tracks,
 
       if (tpt < minPT) continue;
 
-      if (trkMomentum.DeltaR(jetMomentum) > 0.5)
-        continue;
+      if (trkMomentum.DeltaR(jetMomentum) > 0.5) continue;
 
       // Avoid decays that are too far from the beamspot (e.g. Ks, etc.)
       // float d0 = TMath::Abs(track->D0);
       // float z0 = TMath::Abs(track->DZ);
-      if (!IsTaggingTrack(track))
-        continue;
+      if (!IsTaggingTrack(track)) continue;
 
       float sip = sIP3D(jet, track);
 
@@ -383,6 +374,5 @@ inline bool Tagged_sIP3D(Jet *jet, TClonesArray tracks,
 
   return tagged;
 }
-
 
 #endif // ifndef ANALYSISFUNCTIONS
