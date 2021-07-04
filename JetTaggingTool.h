@@ -19,6 +19,11 @@
 #include "TObjArray.h"
 #include "TClonesArray.h"
 
+#include "TMVA/Factory.h"
+#include "TMVA/DataLoader.h"
+#include "TMVA/Reader.h"
+#include "TMVA/Tools.h"
+
 // Other includes
 #include "AnalysisFunctions.cc"
 #include "classes/DelphesClasses.h"
@@ -81,6 +86,40 @@ class JetTaggingTool {
   JetTaggingTool(ExRootTreeReader * data) {
     _jet_tagging_store = std::map < TObject *, JetTaggingInfo > ();
     _data              = data;
+
+    // MVA tagger initialization
+    _mva_inputs_float           = std::map < TString, Float_t > ();
+    _mva_reader_charmipxdtagger = new TMVA::Reader("Silent");
+
+    _mva_inputs_float["Jet_FiducialJet_KIN_PT"]  = 0.0;
+    _mva_inputs_float["Jet_FiducialJet_KIN_Eta"] = 0.0;
+    _mva_inputs_float["Jet_FiducialJet_TRU_ID"]  = 0;
+    _mva_inputs_float["Event_MET_ET"]            = 0.0;
+
+    _mva_reader_charmipxdtagger->AddSpectator("Jet_FiducialJet_KIN_PT",  &(_mva_inputs_float["Jet_FiducialJet_KIN_PT"]));
+    _mva_reader_charmipxdtagger->AddSpectator("Jet_FiducialJet_KIN_Eta", &(_mva_inputs_float["Jet_FiducialJet_KIN_Eta"]));
+    _mva_reader_charmipxdtagger->AddSpectator("Jet_FiducialJet_TRU_ID",  &(_mva_inputs_float["Jet_FiducialJet_TRU_ID"]));
+    _mva_reader_charmipxdtagger->AddSpectator("Event_MET_ET",            &(_mva_inputs_float["Event_MET_ET"]));
+
+    _mva_inputs_float["Jet_FiducialJet_TAG_t1_sIP3D"] = -199.;
+    _mva_inputs_float["Jet_FiducialJet_TAG_t1_IP2D"]  = -1.;
+    _mva_inputs_float["Jet_FiducialJet_TAG_t2_sIP3D"] = -199.;
+    _mva_inputs_float["Jet_FiducialJet_TAG_t2_IP2D"]  = -1.;
+    _mva_inputs_float["Jet_FiducialJet_TAG_t3_sIP3D"] = -199.;
+    _mva_inputs_float["Jet_FiducialJet_TAG_t3_IP2D"]  = -1.;
+    _mva_inputs_float["Jet_FiducialJet_TAG_t4_sIP3D"] = -199.;
+    _mva_inputs_float["Jet_FiducialJet_TAG_t4_IP2D"]  = -1.;
+
+    _mva_reader_charmipxdtagger->AddVariable("Jet_FiducialJet_TAG_t1_sIP3D", &(_mva_inputs_float["Jet_FiducialJet_TAG_t1_sIP3D"]));
+    _mva_reader_charmipxdtagger->AddVariable("Jet_FiducialJet_TAG_t1_IP2D",  &(_mva_inputs_float["Jet_FiducialJet_TAG_t1_IP2D"]));
+    _mva_reader_charmipxdtagger->AddVariable("Jet_FiducialJet_TAG_t2_sIP3D", &(_mva_inputs_float["Jet_FiducialJet_TAG_t2_sIP3D"]));
+    _mva_reader_charmipxdtagger->AddVariable("Jet_FiducialJet_TAG_t2_IP2D",  &(_mva_inputs_float["Jet_FiducialJet_TAG_t2_IP2D"]));
+    _mva_reader_charmipxdtagger->AddVariable("Jet_FiducialJet_TAG_t3_sIP3D", &(_mva_inputs_float["Jet_FiducialJet_TAG_t3_sIP3D"]));
+    _mva_reader_charmipxdtagger->AddVariable("Jet_FiducialJet_TAG_t3_IP2D",  &(_mva_inputs_float["Jet_FiducialJet_TAG_t3_IP2D"]));
+    _mva_reader_charmipxdtagger->AddVariable("Jet_FiducialJet_TAG_t4_sIP3D", &(_mva_inputs_float["Jet_FiducialJet_TAG_t4_sIP3D"]));
+    _mva_reader_charmipxdtagger->AddVariable("Jet_FiducialJet_TAG_t4_IP2D",  &(_mva_inputs_float["Jet_FiducialJet_TAG_t4_IP2D"]));
+
+    _mva_reader_charmipxdtagger->BookMVA("CharmIP3DTagger", "share/TMVAClassification_CharmIPXDTagger.weights.xml");
   }
 
 public:
@@ -220,6 +259,18 @@ public:
       _jet_tagging_store[jet].t4_IP2D = IP2D(jet_tracks[3]);
     }
 
+    // Store MVA tagger information
+    _mva_inputs_float["Jet_FiducialJet_TAG_t1_IP2D"]  = _jet_tagging_store[jet].t1_IP2D;
+    _mva_inputs_float["Jet_FiducialJet_TAG_t1_sIP3D"] = _jet_tagging_store[jet].t1_sIP3D;
+    _mva_inputs_float["Jet_FiducialJet_TAG_t2_IP2D"]  = _jet_tagging_store[jet].t2_IP2D;
+    _mva_inputs_float["Jet_FiducialJet_TAG_t2_sIP3D"] = _jet_tagging_store[jet].t2_sIP3D;
+    _mva_inputs_float["Jet_FiducialJet_TAG_t3_IP2D"]  = _jet_tagging_store[jet].t3_IP2D;
+    _mva_inputs_float["Jet_FiducialJet_TAG_t3_sIP3D"] = _jet_tagging_store[jet].t3_sIP3D;
+    _mva_inputs_float["Jet_FiducialJet_TAG_t4_IP2D"]  = _jet_tagging_store[jet].t4_IP2D;
+    _mva_inputs_float["Jet_FiducialJet_TAG_t4_sIP3D"] = _jet_tagging_store[jet].t4_sIP3D;
+
+    _jet_tagging_store[jet].jet_ipxdtagger = _mva_reader_charmipxdtagger->EvaluateMVA("CharmIP3DTagger");
+
     // Retrieve information about leading, subleading, etc. kaons
     if (DataStore->find("ChargedKaon") != DataStore->end()) {
       TObjArray *ChargedKaon = std::any_cast < TObjArray * > ((*DataStore)["ChargedKaon"]);
@@ -344,6 +395,11 @@ private:
 
   ExRootTreeReader *_data = nullptr;
   std::map < TObject *, JetTaggingInfo > _jet_tagging_store;
+
+  // MVA Taggers
+  std::map < TString, Float_t > _mva_inputs_float;
+
+  TMVA::Reader("Silent") * _mva_reader_charmipxdtagger;
 };
 
 #endif /* ifndef JETTAGGINGTOOL_HH */
