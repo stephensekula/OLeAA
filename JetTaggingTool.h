@@ -55,7 +55,7 @@ struct JetTaggingInfo {
   Double_t t3_pt;
   Double_t t4_sIP3D;
   Double_t t4_IP3D;
-  Double_t sIP3D;
+  Double_t t4_IP2D;
   Double_t t4_d0;
   Double_t t4_d0err;
   Double_t t4_z0;
