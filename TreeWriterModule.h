@@ -339,6 +339,10 @@ private:
         return jet_tagger->getJetTaggingInfo(obj).kTagged;
       }
 
+      if (varName.Contains("CharmIPXDTagger")) {
+        return jet_tagger->getJetTaggingInfo(obj).CharmIPXDTagger;
+      }
+
       if (varName.Contains("t1_PT")) {
         return jet_tagger->getJetTaggingInfo(obj).t1_pt;
       }
