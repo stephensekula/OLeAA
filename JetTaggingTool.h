@@ -400,7 +400,7 @@ private:
   // MVA Taggers
   std::map < TString, Float_t > _mva_inputs_float;
 
-  TMVA::Reader("Silent") * _mva_reader_charmipxdtagger;
+  TMVA::Reader *_mva_reader_charmipxdtagger;
 };
 
 #endif /* ifndef JETTAGGINGTOOL_HH */
