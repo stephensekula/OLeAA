@@ -108,6 +108,24 @@ public:
   void execute(TObject *obj, std::map < std::string, std::any > *DataStore) {
     JetTaggingInfo j = {};
 
+    // Set some reasonable defaults for variables that are/may be used in
+    // classifier training.
+
+    j.jet_pt   = 0.0;
+    j.jet_eta  = -999.;
+    j.t1_sIP3D = -199.;
+    j.t2_sIP3D = -199.;
+    j.t3_sIP3D = -199.;
+    j.t4_sIP3D = -199.;
+    j.t1_IP3D  = -1.;
+    j.t2_IP3D  = -1.;
+    j.t3_IP3D  = -1.;
+    j.t4_IP3D  = -1.;
+    j.t1_IP2D  = -1.;
+    j.t2_IP2D  = -1.;
+    j.t3_IP2D  = -1.;
+    j.t4_IP2D  = -1.;
+
     _jet_tagging_store[obj] = j;
 
     auto jet = static_cast < Jet * > (obj);
@@ -159,8 +177,10 @@ public:
       _jet_tagging_store[jet].t1_z0    = jet_tracks[0]->DZ;
       _jet_tagging_store[jet].t1_z0err = jet_tracks[0]->ErrorDZ;
       _jet_tagging_store[jet].t1_sIP3D = sIP3D(jet, jet_tracks[0], bs);
-      _jet_tagging_store[jet].t1_IP3D  = IP3D(jet_tracks[0]);
-      _jet_tagging_store[jet].t1_IP2D  = IP2D(jet_tracks[0]);
+
+      if (_jet_tagging_store[jet].t1_sIP3D < -199.) _jet_tagging_store[jet].t1_sIP3D = -199.;
+      _jet_tagging_store[jet].t1_IP3D = IP3D(jet_tracks[0]);
+      _jet_tagging_store[jet].t1_IP2D = IP2D(jet_tracks[0]);
     }
 
     if (jet_tracks.size() > 1) {
@@ -170,8 +190,10 @@ public:
       _jet_tagging_store[jet].t2_z0    = jet_tracks[1]->DZ;
       _jet_tagging_store[jet].t2_z0err = jet_tracks[1]->ErrorDZ;
       _jet_tagging_store[jet].t2_sIP3D = sIP3D(jet, jet_tracks[1], bs);
-      _jet_tagging_store[jet].t2_IP3D  = IP3D(jet_tracks[1]);
-      _jet_tagging_store[jet].t2_IP2D  = IP2D(jet_tracks[1]);
+
+      if (_jet_tagging_store[jet].t2_sIP3D < -199.) _jet_tagging_store[jet].t2_sIP3D = -199.;
+      _jet_tagging_store[jet].t2_IP3D = IP3D(jet_tracks[1]);
+      _jet_tagging_store[jet].t2_IP2D = IP2D(jet_tracks[1]);
     }
 
     if (jet_tracks.size() > 2) {
@@ -181,8 +203,10 @@ public:
       _jet_tagging_store[jet].t3_z0    = jet_tracks[2]->DZ;
       _jet_tagging_store[jet].t3_z0err = jet_tracks[2]->ErrorDZ;
       _jet_tagging_store[jet].t3_sIP3D = sIP3D(jet, jet_tracks[2], bs);
-      _jet_tagging_store[jet].t3_IP3D  = IP3D(jet_tracks[2]);
-      _jet_tagging_store[jet].t3_IP2D  = IP2D(jet_tracks[2]);
+
+      if (_jet_tagging_store[jet].t3_sIP3D < -199.) _jet_tagging_store[jet].t3_sIP3D = -199.;
+      _jet_tagging_store[jet].t3_IP3D = IP3D(jet_tracks[2]);
+      _jet_tagging_store[jet].t3_IP2D = IP2D(jet_tracks[2]);
     }
 
     if (jet_tracks.size() > 3) {
@@ -192,8 +216,10 @@ public:
       _jet_tagging_store[jet].t4_z0    = jet_tracks[3]->DZ;
       _jet_tagging_store[jet].t4_z0err = jet_tracks[3]->ErrorDZ;
       _jet_tagging_store[jet].t4_sIP3D = sIP3D(jet, jet_tracks[3], bs);
-      _jet_tagging_store[jet].t4_IP3D  = IP3D(jet_tracks[3]);
-      _jet_tagging_store[jet].t4_IP2D  = IP2D(jet_tracks[3]);
+
+      if (_jet_tagging_store[jet].t4_sIP3D < -199.) _jet_tagging_store[jet].t4_sIP3D = -199.;
+      _jet_tagging_store[jet].t4_IP3D = IP3D(jet_tracks[3]);
+      _jet_tagging_store[jet].t4_IP2D = IP2D(jet_tracks[3]);
     }
 
     // Retrieve information about leading, subleading, etc. kaons
