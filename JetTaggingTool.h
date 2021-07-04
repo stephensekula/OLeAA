@@ -34,6 +34,7 @@ struct JetTaggingInfo {
   Double_t jet_charge_05;
   Double_t sIP3DTagged;
   Double_t kTagged;
+  Double_t CharmIPXDTagger;
   Double_t t1_sIP3D;
   Double_t t1_IP3D;
   Double_t t1_IP2D;
@@ -269,7 +270,7 @@ public:
     _mva_inputs_float["Jet_FiducialJet_TAG_t4_IP2D"]  = _jet_tagging_store[jet].t4_IP2D;
     _mva_inputs_float["Jet_FiducialJet_TAG_t4_sIP3D"] = _jet_tagging_store[jet].t4_sIP3D;
 
-    _jet_tagging_store[jet].jet_ipxdtagger = _mva_reader_charmipxdtagger->EvaluateMVA("CharmIP3DTagger");
+    _jet_tagging_store[jet].CharmIPXDTagger = _mva_reader_charmipxdtagger->EvaluateMVA("CharmIP3DTagger");
 
     // Retrieve information about leading, subleading, etc. kaons
     if (DataStore->find("ChargedKaon") != DataStore->end()) {
