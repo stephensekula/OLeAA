@@ -111,8 +111,6 @@ public:
     // Set some reasonable defaults for variables that are/may be used in
     // classifier training.
 
-    j.jet_pt   = 0.0;
-    j.jet_eta  = -999.;
     j.t1_sIP3D = -199.;
     j.t2_sIP3D = -199.;
     j.t3_sIP3D = -199.;
