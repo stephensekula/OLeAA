@@ -233,7 +233,7 @@ inline float sIP3D(Jet *jet, Track *track, GenParticle *beamspot = nullptr)
     bsz = beamspot->Z;
   }
 
-  int sign = (jpx * (xd - bsx) + jpy * (yd - bsy) + jpz * (zd - bsz) > 0.0) ? 1 : -1;
+  int sign = (jpx * xd + jpy * yd + jpz * zd > 0.0) ? 1 : -1;
 
   // add transverse and longitudinal significances in quadrature
   float sip = sign * IP3D(track);
