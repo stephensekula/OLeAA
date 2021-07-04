@@ -30,24 +30,32 @@ struct JetTaggingInfo {
   Double_t sIP3DTagged;
   Double_t kTagged;
   Double_t t1_sIP3D;
+  Double_t t1_IP3D;
+  Double_t t1_IP2D;
   Double_t t1_d0;
   Double_t t1_d0err;
   Double_t t1_z0;
   Double_t t1_z0err;
   Double_t t1_pt;
   Double_t t2_sIP3D;
+  Double_t t2_IP3D;
+  Double_t t2_IP2D;
   Double_t t2_d0;
   Double_t t2_d0err;
   Double_t t2_z0;
   Double_t t2_z0err;
   Double_t t2_pt;
   Double_t t3_sIP3D;
+  Double_t t3_IP3D;
+  Double_t t3_IP2D;
   Double_t t3_d0;
   Double_t t3_d0err;
   Double_t t3_z0;
   Double_t t3_z0err;
   Double_t t3_pt;
   Double_t t4_sIP3D;
+  Double_t t4_IP3D;
+  Double_t sIP3D;
   Double_t t4_d0;
   Double_t t4_d0err;
   Double_t t4_z0;
@@ -151,6 +159,8 @@ public:
       _jet_tagging_store[jet].t1_z0    = jet_tracks[0]->DZ;
       _jet_tagging_store[jet].t1_z0err = jet_tracks[0]->ErrorDZ;
       _jet_tagging_store[jet].t1_sIP3D = sIP3D(jet, jet_tracks[0], bs);
+      _jet_tagging_store[jet].t1_IP3D  = IP3D(jet_tracks[0]);
+      _jet_tagging_store[jet].t1_IP2D  = IP2D(jet_tracks[0]);
     }
 
     if (jet_tracks.size() > 1) {
@@ -160,6 +170,8 @@ public:
       _jet_tagging_store[jet].t2_z0    = jet_tracks[1]->DZ;
       _jet_tagging_store[jet].t2_z0err = jet_tracks[1]->ErrorDZ;
       _jet_tagging_store[jet].t2_sIP3D = sIP3D(jet, jet_tracks[1], bs);
+      _jet_tagging_store[jet].t2_IP3D  = IP3D(jet_tracks[1]);
+      _jet_tagging_store[jet].t2_IP2D  = IP2D(jet_tracks[1]);
     }
 
     if (jet_tracks.size() > 2) {
@@ -169,6 +181,8 @@ public:
       _jet_tagging_store[jet].t3_z0    = jet_tracks[2]->DZ;
       _jet_tagging_store[jet].t3_z0err = jet_tracks[2]->ErrorDZ;
       _jet_tagging_store[jet].t3_sIP3D = sIP3D(jet, jet_tracks[2], bs);
+      _jet_tagging_store[jet].t3_IP3D  = IP3D(jet_tracks[2]);
+      _jet_tagging_store[jet].t3_IP2D  = IP2D(jet_tracks[2]);
     }
 
     if (jet_tracks.size() > 3) {
@@ -178,6 +192,8 @@ public:
       _jet_tagging_store[jet].t4_z0    = jet_tracks[3]->DZ;
       _jet_tagging_store[jet].t4_z0err = jet_tracks[3]->ErrorDZ;
       _jet_tagging_store[jet].t4_sIP3D = sIP3D(jet, jet_tracks[3], bs);
+      _jet_tagging_store[jet].t4_IP3D  = IP3D(jet_tracks[3]);
+      _jet_tagging_store[jet].t4_IP2D  = IP2D(jet_tracks[3]);
     }
 
     // Retrieve information about leading, subleading, etc. kaons
