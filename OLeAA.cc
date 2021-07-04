@@ -43,7 +43,7 @@ void PrintHelp()
     "--input_dir=<i>:       Directory containing all the ROOT files you want to process\n"
     "--output_file=<o>:     Output ROOT file to store results\n"
     "--config_file=<s>:     The TCL-based configuration file.\n"
-    "--nevents <n>:         The total number of events to process, starting from the zeroth event in the input.\n"
+    "--nevents=<n>:         The total number of events to process, starting from the zeroth event in the input.\n"
     "--help:                Show this helpful message!\n";
 
   exit(1);
@@ -81,12 +81,12 @@ int main(int argc, char *argv[])
 
   const char *const short_opts = "i:o:c:n:h";
   const option long_opts[]     = {
-    { "input_dir",   required_argument,     nullptr,           'i'       },
-    { "output_file", required_argument,     nullptr,           'o'       },
-    { "config_file", required_argument,     nullptr,           'c'       },
-    { "nevents",     optional_argument,     nullptr,           'n'       },
-    { "help",        no_argument,           nullptr,           'h'       },
-    { nullptr,       no_argument,           nullptr,                   0 }
+    { "input_dir",   required_argument,     nullptr,           'i'                 },
+    { "output_file", required_argument,     nullptr,           'o'                 },
+    { "config_file", required_argument,     nullptr,           'c'                 },
+    { "nevents",     optional_argument,     nullptr,           'n'                 },
+    { "help",        no_argument,           nullptr,           'h'                 },
+    { nullptr,       no_argument,           nullptr,                             0 }
   };
 
   while (true)
