@@ -499,12 +499,12 @@ private:
         return jet_tagger->getJetTaggingInfo(obj).k2_q;
       }
 
-      if (varName.Contains("k2_sIP3D")) {
-        return jet_tagger->getJetTaggingInfo(obj).k2_sIP3D;
+      if (varName.Contains("k2_IP2D")) {
+        return jet_tagger->getJetTaggingInfo(obj).k2_IP2D;
       }
 
-      if (varName.Contains("k2_sIP3D")) {
-        return jet_tagger->getJetTaggingInfo(obj).k2_sIP3D;
+      if (varName.Contains("k2_IP3D")) {
+        return jet_tagger->getJetTaggingInfo(obj).k2_IP3D;
       }
 
       if (varName.Contains("k2_sIP3D")) {
