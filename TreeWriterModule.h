@@ -479,6 +479,14 @@ private:
         return jet_tagger->getJetTaggingInfo(obj).k1_q;
       }
 
+      if (varName.Contains("k1_IP2D")) {
+        return jet_tagger->getJetTaggingInfo(obj).k1_IP2D;
+      }
+
+      if (varName.Contains("k1_IP3D")) {
+        return jet_tagger->getJetTaggingInfo(obj).k1_IP3D;
+      }
+
       if (varName.Contains("k1_sIP3D")) {
         return jet_tagger->getJetTaggingInfo(obj).k1_sIP3D;
       }
@@ -489,6 +497,14 @@ private:
 
       if (varName.Contains("k2_q")) {
         return jet_tagger->getJetTaggingInfo(obj).k2_q;
+      }
+
+      if (varName.Contains("k2_sIP3D")) {
+        return jet_tagger->getJetTaggingInfo(obj).k2_sIP3D;
+      }
+
+      if (varName.Contains("k2_sIP3D")) {
+        return jet_tagger->getJetTaggingInfo(obj).k2_sIP3D;
       }
 
       if (varName.Contains("k2_sIP3D")) {

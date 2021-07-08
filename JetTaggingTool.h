@@ -68,9 +68,13 @@ struct JetTaggingInfo {
   Double_t t4_z0err;
   Double_t t4_pt;
   Double_t k1_sIP3D;
+  Double_t k1_IP3D;
+  Double_t k1_IP2D;
   Double_t k1_pt;
   Double_t k1_q;
   Double_t k2_sIP3D;
+  Double_t k2_IP3D;
+  Double_t k2_IP2D;
   Double_t k2_pt;
   Double_t k2_q;
   Double_t e1_sIP3D;
@@ -312,20 +316,28 @@ public:
         _jet_tagging_store[jet].k1_pt    = kaon_tracks[0]->PT;
         _jet_tagging_store[jet].k1_q     = kaon_tracks[0]->Charge;
         _jet_tagging_store[jet].k1_sIP3D = sIP3D(jet, kaon_tracks[0], bs);
+        _jet_tagging_store[jet].k1_IP3D  = IP3D(kaon_tracks[0]);
+        _jet_tagging_store[jet].k1_IP2D  = IP2D(kaon_tracks[0]);
       } else {
         _jet_tagging_store[jet].k1_pt    = 0.0;
         _jet_tagging_store[jet].k1_q     = 0.0;
         _jet_tagging_store[jet].k1_sIP3D = -199.0;
+        _jet_tagging_store[jet].k1_IP3D  = -1.0;
+        _jet_tagging_store[jet].k1_IP2D  = -1.0;
       }
 
       if (kaon_tracks.size() > 1) {
         _jet_tagging_store[jet].k2_pt    = kaon_tracks[1]->PT;
         _jet_tagging_store[jet].k2_q     = kaon_tracks[1]->Charge;
         _jet_tagging_store[jet].k2_sIP3D = sIP3D(jet, kaon_tracks[1], bs);
+        _jet_tagging_store[jet].k2_IP3D  = IP3D(kaon_tracks[1]);
+        _jet_tagging_store[jet].k2_IP2D  = IP2D(kaon_tracks[1]);
       } else {
         _jet_tagging_store[jet].k2_pt    = 0.0;
         _jet_tagging_store[jet].k2_q     = 0.0;
         _jet_tagging_store[jet].k2_sIP3D = -199.0;
+        _jet_tagging_store[jet].k2_IP3D  = -1.0;
+        _jet_tagging_store[jet].k2_IP2D  = -1.0;
       }
 
       // Set the kTagged variable based on work by S. Gilchrist (SMU)
