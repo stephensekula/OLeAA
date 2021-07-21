@@ -3,6 +3,7 @@
 #######################################
 
 set ExecutionPath {
+    CaloCorrection
     TaggingElectron
     Kaon
     Electron
@@ -17,10 +18,17 @@ module ElectronRefinerModule TaggingElectron {
     add selectors "Eta -4.0:4.0"
 }
 
+module CaloEnergyCorrectorModule CaloCorrection {
+    set inputTrackList EFlowTrack
+    set inputTowerList Tower
+    set outputEMFractionMap EMFracMap
+}
+
 module KaonPIDModule Kaon {
 }
 
 module ElectronPIDModule Electron {
+    set fEM_min 0.984
 }
 
 module JetRefinerModule FiducialJet {

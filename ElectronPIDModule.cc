@@ -94,7 +94,17 @@ bool ElectronPIDModule::execute(std::map<std::string, std::any> *DataStore)
     ExRootConfParam p = getConfiguration()->GetParam(Form("%s::%s", getName().c_str(), "fEM_min"));
 
     Double_t fEM     = Eem / (Eem + Ehad);
-    Double_t fEM_min = 0.984;
+    
+    auto EMFracMap = std::any_cast<std::map<TObject *, Double_t>* >((*DataStore)["EMFracMap"]);
+
+    if (EMFracMap->find(eflowtrack->Particle.GetObject()) != EMFracMap->end()) {
+      fEM = (*EMFracMap)[eflowtrack->Particle.GetObject()];
+      Double_t Etotal = Eem + Ehad;
+      Eem = Etotal * fEM;
+      Ehad = Etotal * (1.0 - fEM);
+   }
+
+    Double_t fEM_min = 0.0;
 
     if (p.GetSize() > 0) {
       fEM_min = p.GetDouble();

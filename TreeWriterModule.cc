@@ -126,12 +126,15 @@ void TreeWriterModule::initialize()
             _candidate_vars[prefix + "_TAG_k2_IP3D"]         = std::vector<Double_t>();
             _candidate_vars[prefix + "_TAG_k2_IP2D"]         = std::vector<Double_t>();
             _candidate_vars[prefix + "_TAG_e1_PT"]           = std::vector<Double_t>();
+            _candidate_vars[prefix + "_TAG_e1_q"]            = std::vector<Double_t>();
             _candidate_vars[prefix + "_TAG_e1_sIP3D"]        = std::vector<Double_t>();
-
-            // _candidate_vars[prefix + "_TAG_e1_EhadOverEM"] =
-            // std::vector<Double_t>();
-            _candidate_vars[prefix + "_TAG_e2_PT"]    = std::vector<Double_t>();
-            _candidate_vars[prefix + "_TAG_e2_sIP3D"] = std::vector<Double_t>();
+            _candidate_vars[prefix + "_TAG_e1_IP3D"]         = std::vector<Double_t>();
+            _candidate_vars[prefix + "_TAG_e1_IP2D"]         = std::vector<Double_t>();
+            _candidate_vars[prefix + "_TAG_e2_PT"]           = std::vector<Double_t>();
+            _candidate_vars[prefix + "_TAG_e2_q"]            = std::vector<Double_t>();
+            _candidate_vars[prefix + "_TAG_e2_sIP3D"]        = std::vector<Double_t>();
+            _candidate_vars[prefix + "_TAG_e2_IP3D"]         = std::vector<Double_t>();
+            _candidate_vars[prefix + "_TAG_e2_IP2D"]         = std::vector<Double_t>();
 
             // _candidate_vars[prefix + "_TAG_e2_EhadOverEM"] =
             // std::vector<Double_t>();

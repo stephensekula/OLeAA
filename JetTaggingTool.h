@@ -78,9 +78,15 @@ struct JetTaggingInfo {
   Double_t k2_pt;
   Double_t k2_q;
   Double_t e1_sIP3D;
+  Double_t e1_IP3D;
+  Double_t e1_IP2D;
   Double_t e1_pt;
+  Double_t e1_q;
   Double_t e2_sIP3D;
+  Double_t e2_IP3D;
+  Double_t e2_IP2D;
   Double_t e2_pt;
+  Double_t e2_q;
 };
 
 
@@ -378,28 +384,46 @@ public:
 
       if (electrons.size() > 0) {
         _jet_tagging_store[jet].e1_pt = electrons[0]->PT;
+        _jet_tagging_store[jet].e1_q = electrons[0]->Charge;
 
         for (Int_t e = 0; e < EFlowTrack->GetEntries(); e++) {
           auto eflowtrack = static_cast < Track * > (EFlowTrack->At(e));
 
           if (eflowtrack->Particle.GetObject() == electrons[0]->Particle.GetObject()) {
             _jet_tagging_store[jet].e1_sIP3D = sIP3D(jet, eflowtrack, bs);
-            break;
+	    _jet_tagging_store[jet].e1_IP3D  = IP3D(eflowtrack);
+	    _jet_tagging_store[jet].e1_IP2D  = IP2D(eflowtrack);
+	    break;
           }
         }
+      } else {
+        _jet_tagging_store[jet].e1_pt    = 0.0;
+        _jet_tagging_store[jet].e1_q     = 0.0;
+        _jet_tagging_store[jet].e1_sIP3D = -199.0;
+        _jet_tagging_store[jet].e1_IP3D  = -1.0;
+        _jet_tagging_store[jet].e1_IP2D  = -1.0;
       }
 
       if (electrons.size() > 1) {
         _jet_tagging_store[jet].e2_pt = electrons[1]->PT;
+        _jet_tagging_store[jet].e2_q = electrons[1]->Charge;
 
         for (Int_t e = 0; e < EFlowTrack->GetEntries(); e++) {
           auto eflowtrack = static_cast < Track * > (EFlowTrack->At(e));
 
           if (eflowtrack->Particle.GetObject() == electrons[1]->Particle.GetObject()) {
             _jet_tagging_store[jet].e2_sIP3D = sIP3D(jet, eflowtrack, bs);
-            break;
+	    _jet_tagging_store[jet].e2_IP3D  = IP3D(eflowtrack);
+	    _jet_tagging_store[jet].e2_IP2D  = IP2D(eflowtrack);
+	    break;
           }
         }
+      } else {
+        _jet_tagging_store[jet].e2_pt    = 0.0;
+        _jet_tagging_store[jet].e2_q     = 0.0;
+        _jet_tagging_store[jet].e2_sIP3D = -199.0;
+        _jet_tagging_store[jet].e2_IP3D  = -1.0;
+        _jet_tagging_store[jet].e2_IP2D  = -1.0;
       }
     }
   }
