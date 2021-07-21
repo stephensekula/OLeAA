@@ -5,6 +5,9 @@
 #include "TPRegexp.h"
 #include "TObjArray.h"
 #include "TObjString.h"
+#include "TH1.h"
+#include "TFile.h"
+#include "TRandom.h"
 
 #include "TreeHandler.h"
 
@@ -12,7 +15,7 @@ CaloEnergyCorrectorModule::CaloEnergyCorrectorModule(ExRootTreeReader *data, std
   : Module(data, name)
 {
   _params        = std::map<std::string, std::string>();
-  _EMFractionMap = new std::map<SortableObject *, Double_t>();
+  _EMFractionMap = new std::map<TObject*, Double_t>();
   _emfrac_file   = TFile::Open("share/EMRatioPDFs.root");
 }
 
@@ -112,17 +115,18 @@ bool CaloEnergyCorrectorModule::execute(std::map<std::string, std::any> *DataSto
   iterator.Reset();
   Candidate *candidate = nullptr;
 
-  for (int i = 0; i < inputList->GetEntries(); i++) {
-    Track *p = static_cast<Track *>(inputList->At(i));
+  for (int i = 0; i < inputTrackList->GetEntries(); i++) {
+    Track *p = static_cast<Track *>(inputTrackList->At(i));
 
-    auto CaloTower = std::any_cast<TClonesArray *>((*DataStore)["Tower"]);
+    Double_t emfrac = -1.0;
+      
     Double_t CaloE = 0.0;
     Double_t CaloH = 0.0;
 
     std::vector<Tower *> track_towers;
 
-    for (Int_t t = 0; t < CaloTower->GetEntries(); t++) {
-      auto calotower       = static_cast<Tower *>(CaloTower->At(t));
+    for (Int_t t = 0; t < inputTowerList->GetEntries(); t++) {
+      auto calotower       = static_cast<Tower *>(inputTowerList->At(t));
       auto tower_particles = calotower->Particles;
 
       for (Int_t ref = 0; ref < tower_particles.GetEntries(); ref++) {
@@ -198,7 +202,7 @@ bool CaloEnergyCorrectorModule::execute(std::map<std::string, std::any> *DataSto
     }
 
     // Store the emfraction for this particle
-    _EMFractionMap[p] = emfrac;
+    (*_EMFractionMap)[p->Particle.GetObject()] = emfrac;
   }
 
   (*DataStore)[_params["outputEMFractionMap"]] = _EMFractionMap;

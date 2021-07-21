@@ -1,5 +1,5 @@
-#ifndef REFINERMODULE_HH
-#define REFINERMODULE_HH
+#ifndef CALOENERGYCORRECTORMODULE_HH
+#define CALOENERGYCORRECTORMODULE_HH
 
 /**
    This module allows for a list of particles to be input,
@@ -40,7 +40,7 @@ private:
 
   // Internal correction of calorimeter energy distribution based on Full
   // Simulation
-  std::map<SortableObject *, Double_t> *_EMFractionMap = nullptr;
+  std::map<TObject*, Double_t> *_EMFractionMap = nullptr;
   TFile *_emfrac_file                                  = nullptr;
 
 private:
@@ -49,4 +49,4 @@ private:
 };
 
 
-#endif // ifndef REFINERMODULE_HH
+#endif // ifndef CALOENERGYCORRECTORMODULE_HH
