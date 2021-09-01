@@ -124,25 +124,163 @@ private:
     return 0.0;
   }
 
-  Double_t truthID(TObject *obj) {
-    if (obj->InheritsFrom("Jet")) {
-      auto p = static_cast<Jet *>(obj);
-      return p->Flavor;
-    } else if (obj->InheritsFrom("Track")) {
-      auto p = static_cast<Track *>(obj);
-      return p->PID;
-    } else if (obj->InheritsFrom("Electron")) {
-      auto p = static_cast<Electron *>(obj);
-
-      // Obtain truth from the GenParticle reference
-
-      /* return -11*p->Charge; */
-      if (p->Particle.GetObject() != nullptr) return static_cast<Candidate *>(p->Particle.GetObject())->PID;
+  Double_t pidVar(TString varName, TObject *obj, std::map<std::string, std::any> *DataStore) {
+    if (varName.Contains("_ID")) {
+      if (obj->InheritsFrom("Jet")) {
+        // Not defined for a jet
+        return 0;
+      } else if (obj->InheritsFrom("Track")) {
+        auto p = static_cast<Track *>(obj);
+        return p->PID;
+      } else if (obj->InheritsFrom("Electron")) {
+        auto p = static_cast<Electron *>(obj);
+        return -11 * p->Charge;
+      } else if (obj->InheritsFrom("Muon")) {
+        auto p = static_cast<Track *>(obj);
+        return -13 * p->Charge;
+      }
       return 0.0;
-    } else if (obj->InheritsFrom("Muon")) {
-      auto p = static_cast<Track *>(obj);
-      return -13 * p->Charge;
     }
+    return 0.0;
+  }
+
+  Double_t truthVar(TString varName, TObject *obj, std::map<std::string, std::any> *DataStore) {
+    if (varName.Contains("_ID")) {
+      if (obj->InheritsFrom("Jet")) {
+        auto p = static_cast<Jet *>(obj);
+        return p->Flavor;
+      } else if (obj->InheritsFrom("Track")) {
+        auto p = static_cast<Track *>(obj);
+
+        GenParticle *original = dynamic_cast<GenParticle *>(p->Particle.GetObject());
+
+        if (original) {
+          return original->PID;
+        }
+
+        return 0.0;
+      } else if (obj->InheritsFrom("Electron")) {
+        auto p = static_cast<Electron *>(obj);
+
+        // Obtain truth from the GenParticle reference
+
+        /* return -11*p->Charge; */
+        if (p->Particle.GetObject() != nullptr) return static_cast<Candidate *>(p->Particle.GetObject())->PID;
+        return 0.0;
+      } else if (obj->InheritsFrom("Muon")) {
+        auto p = static_cast<Track *>(obj);
+        return -13 * p->Charge;
+      }
+      return 0.0;
+    } else if (varName.Contains("_PT")) {
+      if (obj->InheritsFrom("Jet")) {
+        auto p = static_cast<Jet *>(obj);
+
+        // match to a truth jet
+        auto truthjets    = std::any_cast<TClonesArray *>((*DataStore)["GenJet"]);
+        Double_t minDR    = 1e99;
+        Jet     *truthJet = nullptr;
+
+        for (Int_t tj = 0; tj < truthjets->GetEntries(); tj++) {
+          Jet *genJet = static_cast<Jet *>(truthjets->At(tj));
+          Double_t dR = genJet->P4().DeltaR(p->P4());
+
+          if ((dR < 0.5) && (dR < minDR)) {
+            minDR    = dR;
+            truthJet = genJet;
+          }
+        }
+
+        if (truthJet != nullptr)
+          return truthJet->PT;
+        return 0.0;
+      } else if (obj->InheritsFrom("Track")) {
+        auto p = dynamic_cast<Track *>(obj);
+
+        TClonesArray *TruthParticles = std::any_cast<TClonesArray *>((*DataStore)["Particle"]);
+        Double_t minDR               = 1e99;
+        GenParticle *truthparticle   = nullptr;
+
+        for (Int_t tp = 0; tp < TruthParticles->GetEntries(); tp++) {
+          GenParticle *a_particle = static_cast<GenParticle *>(TruthParticles->At(tp));
+
+          Double_t dR = a_particle->P4().DeltaR(p->P4());
+
+          if ((a_particle->Charge == p->Charge) && (dR < minDR)) {
+            minDR         = dR;
+            truthparticle = a_particle;
+          }
+        }
+
+        // std::cout << truthparticle << std::endl;
+        if (truthparticle != nullptr)
+          return truthparticle->PT;
+        return -999.0;
+      } else if (obj->InheritsFrom("Electron")) {
+        auto p = static_cast<Electron *>(obj);
+
+        auto truthparticle = static_cast<GenParticle *>(p->Particle.GetObject());
+
+        if (truthparticle != nullptr)
+          return truthparticle->PT;
+        return -999.0;
+      } else if (obj->InheritsFrom("Muon")) {
+        auto p             = static_cast<Track *>(obj);
+        auto truthparticle = static_cast<GenParticle *>(p->Particle.GetObject());
+
+        if (truthparticle != nullptr)
+          return truthparticle->PT;
+        return -999.0;
+      }
+      return 0.0;
+    } else if (varName.Contains("_Eta")) {
+      if (obj->InheritsFrom("Jet")) {
+        auto p = static_cast<Jet *>(obj);
+
+        // match to a truth jet
+        auto truthjets    = std::any_cast<TClonesArray *>((*DataStore)["GenJet"]);
+        Double_t minDR    = 1e99;
+        Jet     *truthJet = nullptr;
+
+        for (Int_t tj = 0; tj < truthjets->GetEntries(); tj++) {
+          Jet *genJet = static_cast<Jet *>(truthjets->At(tj));
+          Double_t dR = genJet->P4().DeltaR(p->P4());
+
+          if ((dR < 0.5) && (dR < minDR)) {
+            minDR    = dR;
+            truthJet = genJet;
+          }
+        }
+
+        if (truthJet != nullptr)
+          return truthJet->Eta;
+        return 0.0;
+      } else if (obj->InheritsFrom("Track")) {
+        auto p             = static_cast<Track *>(obj);
+        auto truthparticle = static_cast<GenParticle *>(p->Particle.GetObject());
+
+        if (truthparticle != nullptr)
+          return truthparticle->Eta;
+        return -999.0;
+      } else if (obj->InheritsFrom("Electron")) {
+        auto p = static_cast<Electron *>(obj);
+
+        auto truthparticle = static_cast<GenParticle *>(p->Particle.GetObject());
+
+        if (truthparticle != nullptr)
+          return truthparticle->Eta;
+        return -999.0;
+      } else if (obj->InheritsFrom("Muon")) {
+        auto p             = static_cast<Track *>(obj);
+        auto truthparticle = static_cast<GenParticle *>(p->Particle.GetObject());
+
+        if (truthparticle != nullptr)
+          return truthparticle->Eta;
+        return -999.0;
+      }
+      return 0.0;
+    }
+
     return 0.0;
   }
 
@@ -154,11 +292,11 @@ private:
       Double_t emfrac = -1.0;
 
       // Retrieve the full-sim corrected EM fraction map
-      auto EMFracMap = std::any_cast<std::map<TObject *, Double_t>* >((*DataStore)["EMFracMap"]);
+      auto EMFracMap = std::any_cast<std::map<TObject *, Double_t> *>((*DataStore)["EMFracMap"]);
 
-      // See if this track is in the map. 
+      // See if this track is in the map.
       if (EMFracMap->find(p->Particle.GetObject()) != EMFracMap->end()) {
-	emfrac = (*EMFracMap)[p->Particle.GetObject()];
+        emfrac = (*EMFracMap)[p->Particle.GetObject()];
       }
 
       if (varName.Contains("_Eem")) {
@@ -465,7 +603,6 @@ private:
       if (varName.Contains("e2_sIP3D")) {
         return jet_tagger->getJetTaggingInfo(obj).e2_sIP3D;
       }
-
     }
     return 0.0;
   }

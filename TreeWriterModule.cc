@@ -77,7 +77,11 @@ void TreeWriterModule::initialize()
             _candidate_vars[prefix + "_CALO_Eem"]  = std::vector<Double_t>();
             _candidate_vars[prefix + "_CALO_Ehad"] = std::vector<Double_t>();
           } else if (varName == "Truth") {
-            _candidate_vars[prefix + "_TRU_ID"] = std::vector<Double_t>();
+            _candidate_vars[prefix + "_TRU_ID"]  = std::vector<Double_t>();
+            _candidate_vars[prefix + "_TRU_PT"]  = std::vector<Double_t>();
+            _candidate_vars[prefix + "_TRU_Eta"] = std::vector<Double_t>();
+          } else if (varName == "PID") {
+            _candidate_vars[prefix + "_PID_ID"] = std::vector<Double_t>();
           } else if (varName == "JetTagging") {
             _candidate_vars[prefix + "_TAG_jet_charge_05"]   = std::vector<Double_t>();
             _candidate_vars[prefix + "_TAG_sIP3DTagger"]     = std::vector<Double_t>();
@@ -259,10 +263,12 @@ bool TreeWriterModule::execute(std::map<std::string, std::any> *DataStore)
           itc->second.push_back(kinVar(itc->first, candidate));
         } else if (itc->first.Contains("_CALO_")) {
           itc->second.push_back(caloVar(itc->first, candidate, DataStore));
-        } else if (itc->first.Contains("TRU_ID")) {
-          itc->second.push_back(truthID(candidate));
+        } else if (itc->first.Contains("_TRU_")) {
+          itc->second.push_back(truthVar(itc->first, candidate, DataStore));
         } else if (itc->first.Contains("_TAG_")) {
           itc->second.push_back(jetTagging(itc->first, candidate, DataStore));
+        } else if (itc->first.Contains("_PID_")) {
+          itc->second.push_back(pidVar(itc->first, candidate, DataStore));
         }
       }
     }
