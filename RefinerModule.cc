@@ -167,6 +167,7 @@ template <class T> bool RefinerModule<T>::execute(std::map<std::string, std::any
     }
     if (keepCandidate) {
       Candidate* new_candidate = static_cast<Candidate*>(candidate->Clone());
+      //new_candidate->Particle = candidate->Particle; // breaks for Photon objects
       _outputList->AddLast(new_candidate);
     }
   }
