@@ -32,7 +32,7 @@ class ElectronPIDModule : public Module {
 
   ~ElectronPIDModule();
 
-  void initialize() override {};
+  void initialize() override;
   bool execute(std::map<std::string, std::any>* DataStore) override;
   void finalize() override {};
 
@@ -40,6 +40,7 @@ class ElectronPIDModule : public Module {
 
   TObjArray* _outputList = nullptr;
   Double_t _electron_mass = 0.0;
+  std::map<std::string, std::string> _params;
 };
 
 #endif

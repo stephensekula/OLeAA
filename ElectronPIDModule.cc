@@ -12,6 +12,7 @@
 ElectronPIDModule::ElectronPIDModule(ExRootTreeReader *data, std::string name)
   : Module(data, name)
 {
+  _params = std::map<std::string, std::string>();
   _outputList    = new TObjArray();
   _electron_mass = TDatabasePDG().GetParticle(11)->Mass();
 }
@@ -19,12 +20,38 @@ ElectronPIDModule::ElectronPIDModule(ExRootTreeReader *data, std::string name)
 ElectronPIDModule::~ElectronPIDModule()
 {}
 
+void ElectronPIDModule::initialize()
+{
+  // Verify required parameters are specified
+  std::vector<std::string> required;
+  required.push_back("inputList");
+  required.push_back("outputList");
+  
+  for (auto r : required) {
+
+    ExRootConfParam p = getConfiguration()->GetParam(Form("%s::%s", getName().c_str(), r.c_str()));
+
+    if (p.GetSize() > 0) {
+      _params[r] = p.GetString();
+    }
+
+    if (_params.find(r) == _params.end()) {
+      std::stringstream message;
+      message << "Required parameter " << r << " not specified in module " << getName() << " of class RefinerModule!" << std::endl;
+      throw std::runtime_error(message.str());
+    } else {
+      std::cout << getName() << "::" << r << ": value set to " << _params[r] << std::endl;
+    }
+  }
+  
+}
+
 bool ElectronPIDModule::execute(std::map<std::string, std::any> *DataStore)
 {
   auto data = getData();
 
 
-  if (DataStore->find("ChargedElectron") != DataStore->end()) {
+  if (DataStore->find(_params["outputList"]) != DataStore->end()) {
     std::stringstream message;
     message << "Cannot overwrite existing list ChargedElectron [" << getName() << "::ElectronPIDModule]" << std::endl;
     throw std::runtime_error(message.str());
@@ -39,15 +66,31 @@ bool ElectronPIDModule::execute(std::map<std::string, std::any> *DataStore)
 
 
   if (((*DataStore).find("Tower") == (*DataStore).end()) ||
-      ((*DataStore).find("EFlowTrack") == (*DataStore).end())) {
+      ((*DataStore).find(_params["inputList"]) == (*DataStore).end())) {
     std::stringstream message;
     message << "Missing input lists requested from the DataStore! [" << getName() << "::ElectronPIDModule]" << std::endl;
     throw std::runtime_error(message.str());
   }
 
   auto CaloTower  = std::any_cast<TClonesArray *>((*DataStore)["Tower"]);
-  auto EFlowTrack = std::any_cast<TClonesArray *>((*DataStore)["EFlowTrack"]);
-
+  TObjArray* EFlowTrack = nullptr;
+  
+  
+  try {
+    EFlowTrack = std::any_cast<TObjArray *>((*DataStore)[_params["inputList"]]);
+  } catch (const std::bad_any_cast& e)
+    {
+      try {
+	EFlowTrack = std::any_cast<TClonesArray *>((*DataStore)[_params["inputList"]]);
+      } catch (const std::bad_any_cast& e)
+        {
+          std::stringstream message;
+          message << "Input list " << _params["inputList"]
+                  << " must be either TObjArray or TClonesArray! [" << getName() << "::execute]" << std::endl;
+          throw std::runtime_error(message.str());
+        }
+    }
+  
 
   // Loop over EFlowTracks. Store for each the EM and HAD energy in the
   // associated
@@ -138,12 +181,12 @@ bool ElectronPIDModule::execute(std::map<std::string, std::any> *DataStore)
 
       electron->Particle = eflowtrack->Particle;
 
-      _outputList->AddLast(electron);
+      _outputList->Add(electron);
     }
   }
 
 
-  (*DataStore)["ChargedElectron"] = _outputList;
+  (*DataStore)[_params["outputList"]] = _outputList;
 
 
   return true;
