@@ -28,7 +28,9 @@ module KaonPIDModule Kaon {
 }
 
 module ElectronPIDModule Electron {
-    set fEM_min 0.984
+    set inputList EFlowTrack
+    set outputList ChargedElectron
+    set fEM_min 0.991
 }
 
 module JetRefinerModule FiducialJet {
@@ -41,6 +43,12 @@ module JetRefinerModule FiducialJet {
 module TreeWriterModule TreeWriter {
     add branches {Event} {} {MET DIS}
     add branches {Electron} {TaggingElectron} {Kinematics Truth}
+    add branches {Track} {Track} {Kinematics Truth}
+    add branches {Track} {ChargedKaon} {Kinematics PID Truth}
+    add branches {Track} {barrelDIRCTrack} {Kinematics PID Truth}
+    add branches {Track} {mRICHTrack} {Kinematics PID Truth}
+    add branches {Track} {dualRICHagTrack} {Kinematics PID Truth}
+    add branches {Track} {dualRICHcfTrack} {Kinematics PID Truth}
     add branches {Electron} {ChargedElectron} {Kinematics Calorimeter Truth}
     add branches {Jet} {FiducialJet} {Kinematics Truth JetTagging}
 }
